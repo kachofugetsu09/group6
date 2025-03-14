@@ -1,4 +1,6 @@
-package com.group7;
+package com.group2;
+
+import com.group2.GUI.GameFrame;
 
 import javax.swing.SwingUtilities;
 

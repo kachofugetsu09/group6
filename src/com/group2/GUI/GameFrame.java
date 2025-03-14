@@ -1,4 +1,4 @@
-package com.group7;
+package com.group2.GUI;
 
 import javax.swing.*;
 import java.awt.*;
