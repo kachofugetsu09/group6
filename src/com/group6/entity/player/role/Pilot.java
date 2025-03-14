@@ -1,6 +1,6 @@
-package com.group2.entity.player.role;
+package com.group6.entity.player.role;
 
-import com.group2.entity.player.Player;
+import com.group6.entity.player.Player;
 
 public class Pilot extends Player {
     @Override

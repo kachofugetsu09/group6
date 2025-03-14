@@ -1,4 +1,4 @@
-package com.group2.entity.common;
+package com.group6.entity.common;
 
 public enum RoleType {
     ENGINEER("工程师", "可以修复一个沉没的瓷砖"),

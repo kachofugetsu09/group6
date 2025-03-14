@@ -1,8 +1,8 @@
-package com.group2.entity.player;
+package com.group6.entity.player;
 
-import com.group2.entity.common.Card;
-import com.group2.entity.common.RoleType;
-import com.group2.entity.common.Tile;
+import com.group6.entity.common.Card;
+import com.group6.entity.common.RoleType;
+import com.group6.entity.common.Tile;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 

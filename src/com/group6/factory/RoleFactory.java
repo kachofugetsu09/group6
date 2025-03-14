@@ -1,8 +1,8 @@
-package com.group2.factory;
+package com.group6.factory;
 
-import com.group2.entity.common.RoleType;
-import com.group2.entity.player.Player;
-import com.group2.entity.player.role.*;
+import com.group6.entity.common.RoleType;
+import com.group6.entity.player.Player;
+import com.group6.entity.player.role.*;
 
 public class RoleFactory {
 
