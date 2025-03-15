@@ -4,11 +4,15 @@ import com.group6.entity.common.Card;
 import com.group6.entity.common.RoleType;
 import com.group6.entity.common.Tile;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 @AllArgsConstructor
 @NoArgsConstructor
+@Setter
+@Getter
 public abstract class Player {
     //当前玩家职业
     private RoleType roletype;
@@ -17,19 +21,12 @@ public abstract class Player {
     //当前玩家位置
     private Tile currentPosition;
     //手牌
-    private ArrayList<Card>  hand;
+    private ArrayList<Card>  hand = new ArrayList<>();
     //剩余行动点数
     private int actions;
     private boolean hasTurn;
+    private Card selectedCard =null;
 
-    public Player(RoleType roleType, String color, Tile startingTile) {
-        this.roletype = roleType;
-        this.color = color;
-        this.currentPosition = startingTile;
-        this.hand = new ArrayList<>();
-        this.actions = 3;
-        this.hasTurn = false;
-    }
 
     // 回合管理
     public void startTurn() {
@@ -68,15 +65,31 @@ public abstract class Player {
         }
         return currentPosition.isNearBy(destination);
     }
-    // 特殊能力相关（由具体角色实现）
 
-    public abstract void performSpecialAbility();
+    public abstract void performSpecialAbility(Object... params);
 
-    public void shoreUp(Tile tile){};
+    public void shoreUp(Tile tile){
+        if(!tile.isFlooded()){
+            return;
+        }
+        if(this.getCurrentPosition().isNearBy(tile)&&actions>0){
+            tile.setFlooded(false);
+            this.actions--;
+        }
+    };
     public boolean isMoveAble(){
-        return actions>0;
+        return this.actions>0;
     }
 
+    public boolean passCardTo(Player other,Card card){
+        if(other.hand.size()==5&&card==null){
+            return false;
+        }
+        this.hand.remove(card);
+        other.hand.add(card);
+        card.setOwner(other);
+        return true;
+    }
 
 
 }

@@ -23,12 +23,12 @@ public class GameFrame extends JFrame {
         centerPanel.add(createLeftPanel(), BorderLayout.WEST);
         centerPanel.add(createGamePanel(), BorderLayout.CENTER);
 
-// 创建右侧双列面板
+        // 创建右侧双列面板
         JPanel rightSectionPanel = new JPanel(new BorderLayout());
         rightSectionPanel.add(createRightColumn1(), BorderLayout.EAST); // 最右侧信息区(右列1)
         rightSectionPanel.add(createRightColumn2(), BorderLayout.CENTER); // 洪水弃牌区(右列2)
 
-// 将右侧面板添加到中心面板
+        // 将右侧面板添加到中心面板
         centerPanel.add(rightSectionPanel, BorderLayout.EAST);
 
 
