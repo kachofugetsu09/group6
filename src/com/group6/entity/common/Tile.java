@@ -1,33 +1,28 @@
 package com.group6.entity.common;
 
-import com.group6.entity.player.Player;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Setter
+import java.awt.Point;
+
 @Getter
+@Setter
 public class Tile {
-    private int row;
-    private int col;
+    private String name;
     private boolean flooded;
-    private Player occupyingPlayer;
+    // 添加位置信息
+    private Point position;
 
-    public Tile(int row, int col) {
-        this.row = row;
-        this.col = col;
+    public Tile(String name, int x, int y) {
+        this.name = name;
         this.flooded = false;
-        this.occupyingPlayer = null;
+        this.position = new Point(x, y);
     }
 
-    public boolean isNearBy(Tile destination) {
-        return (Math.abs(this.row - destination.row) + Math.abs(this.col - destination.col)) == 1;
-    }
-
-    public boolean isFlooded() {
-        return flooded;
+    public boolean isNearBy(Tile other) {
+        // 检查是否相邻（上下左右）
+        int dx = Math.abs(this.position.x - other.position.x);
+        int dy = Math.abs(this.position.y - other.position.y);
+        return (dx == 1 && dy == 0) || (dx == 0 && dy == 1);
     }
 }

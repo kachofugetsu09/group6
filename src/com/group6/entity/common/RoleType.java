@@ -1,5 +1,9 @@
 package com.group6.entity.common;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
 public enum RoleType {
     ENGINEER("工程师", "可以修复一个沉没的瓷砖"),
     PILOT("飞行员", "每回合可以飞到任意瓷砖"),
@@ -16,11 +20,4 @@ public enum RoleType {
         this.ability = ability;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getAbility() {
-        return ability;
-    }
 }

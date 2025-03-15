@@ -1,11 +1,25 @@
 package com.group6.GUI;
 
+import com.group6.controller.GameController;
+import com.group6.entity.common.Tile;
+import com.group6.entity.player.Player;
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class GameFrame extends JFrame {
+    private GameController gameController;
+    // 存储每个格子的面板引用
+    private JPanel[][] tilePanels;
+    // 游戏日志区域
+    private JTextArea logArea;
 
     public GameFrame() {
+        // 初始化游戏控制器
+        gameController = new GameController();
+
         // 设置窗口基本属性
         setTitle("Forbidden Island");
         setSize(1024, 768);
@@ -31,7 +45,6 @@ public class GameFrame extends JFrame {
         // 将右侧面板添加到中心面板
         centerPanel.add(rightSectionPanel, BorderLayout.EAST);
 
-
         // 创建底部面板
         JPanel bottomPanel = createBottomPanel();
 
@@ -42,75 +55,119 @@ public class GameFrame extends JFrame {
 
         // 添加主面板到窗口
         add(mainPanel);
+
+        // 初始化游戏界面
+        updateGameBoard();
+
+        // 居中显示
+        setLocationRelativeTo(null);
+        setVisible(true);
     }
 
-    // 创建顶部面板（上方两个玩家棋子展示区）
+    // 创建顶部面板
     private JPanel createTopPanel() {
         JPanel panel = new JPanel();
-        panel.setBackground(Color.LIGHT_GRAY);
-        panel.setPreferredSize(new Dimension(1024, 50));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 10)); // 增加间距为20
+        panel.setPreferredSize(new Dimension(1024, 30));
+        panel.setBackground(new Color(70, 130, 180)); // 钢蓝色
 
-        // 添加2个玩家区域
-        for (int player = 0; player < 2; player++) {
-            // 创建玩家棋子（红色方块）
-            JPanel playerPiece = new JPanel();
-            playerPiece.setPreferredSize(new Dimension(30, 30));
-            playerPiece.setBackground(Color.RED);
-            panel.add(playerPiece);
-
-            // 在每个玩家后面添加5个白色方块（卡牌）
-            for (int card = 0; card < 5; card++) {
-                JPanel cardPanel = new JPanel();
-                cardPanel.setPreferredSize(new Dimension(30, 30));
-                cardPanel.setBackground(Color.WHITE);
-                cardPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                panel.add(cardPanel);
-            }
-
-            // 如果不是最后一个玩家，添加一个间隔
-            if (player < 1) {
-                JPanel spacer = new JPanel();
-                spacer.setPreferredSize(new Dimension(30, 30));
-                spacer.setBackground(Color.LIGHT_GRAY);
-                panel.add(spacer);
-            }
-        }
+        JLabel titleLabel = new JLabel("Forbidden Island Game");
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        panel.add(titleLabel);
 
         return panel;
     }
 
-    // 创建左侧面板（宝藏弃牌区和水位指示器）
+    // 创建左侧面板
     private JPanel createLeftPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel();
         panel.setPreferredSize(new Dimension(150, 600));
+        panel.setBackground(new Color(222, 184, 135)); // 棕褐色
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        // 创建宝藏弃牌区
-        JPanel treasurePanel = new JPanel();
-        treasurePanel.setPreferredSize(new Dimension(150, 300));
-        treasurePanel.setBackground(new Color(219, 112, 82)); // 橙红色背景
-        JLabel treasureLabel = new JLabel("Treasure Discard:");
-        treasureLabel.setForeground(Color.WHITE);
-        treasurePanel.add(treasureLabel);
+        // 添加玩家信息区域
+        JPanel playersPanel = new JPanel();
+        playersPanel.setLayout(new BoxLayout(playersPanel, BoxLayout.Y_AXIS));
+        playersPanel.setBorder(BorderFactory.createTitledBorder("Players"));
+        playersPanel.setBackground(new Color(245, 222, 179)); // 小麦色
+        playersPanel.setMaximumSize(new Dimension(140, 240));
+        playersPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // 创建水位指示器
-        JPanel waterPanel = new JPanel();
-        waterPanel.setPreferredSize(new Dimension(150, 300));
-        waterPanel.setBackground(new Color(0, 102, 153)); // 深蓝色背景
-
-        // 水位指示标记
-        waterPanel.setLayout(new GridLayout(5, 1));
-        for (int i = 5; i >= 1; i--) {
-            JPanel levelPanel = new JPanel();
-            levelPanel.setBackground(new Color(0, 102, 153)); // 深蓝色背景
-            JLabel levelLabel = new JLabel(String.valueOf(i));
-            levelLabel.setForeground(Color.WHITE);
-            levelPanel.add(levelLabel);
-            waterPanel.add(levelPanel);
+        // 为每个玩家添加信息面板
+        for (Player player : gameController.getGameBoard().getPlayers()) {
+            JPanel playerInfo = createPlayerInfoPanel(player);
+            playersPanel.add(playerInfo);
+            playersPanel.add(Box.createVerticalStrut(5));
         }
 
-        panel.add(treasurePanel, BorderLayout.NORTH);
-        panel.add(waterPanel, BorderLayout.CENTER);
+        JPanel cardsPanel = new JPanel();
+        cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
+        cardsPanel.setBorder(BorderFactory.createTitledBorder("Treasure Cards"));
+        cardsPanel.setBackground(new Color(245, 222, 179)); // 小麦色
+        cardsPanel.setMaximumSize(new Dimension(140, 280));
+        cardsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // 添加牌区占位符
+        for (int i = 0; i < 5; i++) {
+            JPanel cardSlot = new JPanel();
+            cardSlot.setPreferredSize(new Dimension(120, 40));
+            cardSlot.setMaximumSize(new Dimension(120, 40));
+            cardSlot.setBackground(new Color(255, 250, 205)); // 淡黄色
+            cardSlot.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            cardSlot.setAlignmentX(Component.CENTER_ALIGNMENT);
+            cardSlot.add(new JLabel("Card " + (i + 1)));
+            cardsPanel.add(cardSlot);
+            cardsPanel.add(Box.createVerticalStrut(5));
+        }
+
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(playersPanel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(cardsPanel);
+
+        return panel;
+    }
+
+    // 创建玩家信息面板
+    private JPanel createPlayerInfoPanel(Player player) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.setMaximumSize(new Dimension(130, 50));
+
+        // 根据角色颜色设置背景
+        Color bgColor;
+        switch (player.getColor()) {
+            case "RED":
+                bgColor = new Color(255, 200, 200);
+                break;
+            case "BLUE":
+                bgColor = new Color(200, 200, 255);
+                break;
+            case "GREEN":
+                bgColor = new Color(200, 255, 200);
+                break;
+            case "BLACK":
+                bgColor = new Color(220, 220, 220);
+                break;
+            default:
+                bgColor = Color.WHITE;
+                break;
+        }
+        panel.setBackground(bgColor);
+        panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+
+        // 添加角色名称
+        JLabel nameLabel = new JLabel(player.getRoletype().name());
+        nameLabel.setHorizontalAlignment(JLabel.CENTER);
+        panel.add(nameLabel, BorderLayout.CENTER);
+
+        // 添加位置信息
+        if (player.getCurrentPosition() != null) {
+            Point pos = player.getCurrentPosition().getPosition();
+            JLabel posLabel = new JLabel("(" + pos.x + "," + pos.y + ")");
+            posLabel.setHorizontalAlignment(JLabel.CENTER);
+            panel.add(posLabel, BorderLayout.SOUTH);
+        }
 
         return panel;
     }
@@ -133,30 +190,53 @@ public class GameFrame extends JFrame {
         // 创建岛屿格子（6x6网格）
         panel.setLayout(new GridLayout(6, 6, 2, 2));
 
+        // 初始化格子面板数组
+        tilePanels = new JPanel[6][6];
+
         // 添加36个岛屿格子
-        for (int i = 0; i < 36; i++) {
-            JPanel tilePanel = new JPanel();
-            tilePanel.setLayout(new BorderLayout());
+        for (int y = 0; y < 6; y++) {
+            for (int x = 0; x < 6; x++) {
+                final int tileX = x + 1;  // 转换为1-6的坐标
+                final int tileY = y + 1;
 
-            // 为每个格子添加一个标签（实际应用中应加载图片）
-            JLabel tileLabel = new JLabel("Tile " + (i+1));
-            tileLabel.setHorizontalAlignment(JLabel.CENTER);
-            tilePanel.add(tileLabel, BorderLayout.CENTER);
+                JPanel tilePanel = new JPanel();
+                tilePanel.setLayout(new BorderLayout());
+                tilePanel.setBackground(new Color(200, 200, 160)); // 岛屿默认颜色
 
-            // 添加名称标签在底部
-            JLabel nameLabel = new JLabel("Island Name");
-            nameLabel.setHorizontalAlignment(JLabel.CENTER);
-            nameLabel.setBackground(new Color(210, 180, 140)); // 浅棕色
-            nameLabel.setOpaque(true);
-            tilePanel.add(nameLabel, BorderLayout.SOUTH);
+                // 为每个格子添加一个标签
+                JLabel tileLabel = new JLabel();
+                tileLabel.setHorizontalAlignment(JLabel.CENTER);
+                tilePanel.add(tileLabel, BorderLayout.CENTER);
 
-            panel.add(tilePanel);
+                // 添加名称标签在底部
+                JLabel nameLabel = new JLabel(tileX + "," + tileY);
+                nameLabel.setHorizontalAlignment(JLabel.CENTER);
+                nameLabel.setBackground(new Color(210, 180, 140)); // 浅棕色
+                nameLabel.setOpaque(true);
+                tilePanel.add(nameLabel, BorderLayout.SOUTH);
+
+                // 添加点击事件
+                tilePanel.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        Tile clickedTile = gameController.findTileAt(tileX, tileY);
+                        if (clickedTile != null) {
+                            gameController.selectTile(clickedTile);
+                            updateGameBoard();
+                            logArea.append("选择了格子: " + tileX + "," + tileY + "\n");
+                        }
+                    }
+                });
+
+                panel.add(tilePanel);
+                tilePanels[y][x] = tilePanel;  // 存储面板引用
+            }
         }
 
         return panel;
     }
 
-    // 创建最右侧面板(右列1：info、config、logs和按钮)
+    // 创建右侧信息面板
     private JPanel createRightColumn1() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setPreferredSize(new Dimension(200, 600));
@@ -164,104 +244,110 @@ public class GameFrame extends JFrame {
         // 创建信息区
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBackground(new Color(230, 230, 230));
 
         // 添加标题
-        JLabel titleLabel = new JLabel("Info");
+        JLabel titleLabel = new JLabel("Game Info");
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
 
         // 添加FORBIDDEN ISLAND标题
         JLabel gameLabel = new JLabel("FORBIDDEN");
         gameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        gameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        gameLabel.setFont(new Font("Arial", Font.BOLD, 18));
         JLabel islandLabel = new JLabel("ISLAND");
         islandLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        islandLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        islandLabel.setFont(new Font("Arial", Font.BOLD, 18));
 
-        // 添加CREATED BY标签
-        JLabel createdByLabel = new JLabel("CREATED BY");
-        createdByLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        createdByLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-
-        // 添加团队名称
-        JLabel teamLabel = new JLabel("TEAM");
-        teamLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        teamLabel.setFont(new Font("Arial", Font.BOLD, 12));
-
-        // 添加配置区域
-        JPanel configPanel = new JPanel();
-        configPanel.setLayout(new BoxLayout(configPanel, BoxLayout.Y_AXIS));
-        configPanel.setMaximumSize(new Dimension(180, 100));
-        configPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        configPanel.setBorder(BorderFactory.createTitledBorder("Config"));
-
-        // 添加难度选择 - 简化版本
-        JPanel difficultyPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        difficultyPanel.setMaximumSize(new Dimension(180, 30));
-        JLabel difficultyLabel = new JLabel("Difficulty:");
-        difficultyPanel.add(difficultyLabel);
-
-        // 创建简化的难度选择下拉菜单 - 只显示1-5数字
-        String[] difficultyLevels = {"1", "2", "3", "4", "5"};
-        JComboBox<String> difficultyComboBox = new JComboBox<>(difficultyLevels);
-        difficultyComboBox.setPreferredSize(new Dimension(60, 25));
-        difficultyPanel.add(difficultyComboBox);
-
-        // 将配置选项添加到配置面板
-        configPanel.add(difficultyPanel);
-
-        // 添加Start按钮
-        JButton startButton = new JButton("Start");
-        startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        startButton.setMaximumSize(new Dimension(100, 30));
-        startButton.setBackground(new Color(0, 150, 0)); // 绿色
-        startButton.setForeground(Color.WHITE);
-        startButton.setFont(new Font("Arial", Font.BOLD, 14));
-
-        // 添加日志区域 - 更小的尺寸
+        // 添加日志区域
         JPanel logPanel = new JPanel();
         logPanel.setLayout(new BorderLayout());
         logPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         logPanel.setBorder(BorderFactory.createTitledBorder("Game Log"));
-        logPanel.setMaximumSize(new Dimension(180, 100)); // 减小日志区域高度
+        logPanel.setMaximumSize(new Dimension(180, 150));
 
-        JTextArea logArea = new JTextArea(4, 15); // 减少行数
+        logArea = new JTextArea(8, 15);
         logArea.setEditable(false);
         logArea.setFont(new Font("Monospaced", Font.PLAIN, 10));
         JScrollPane scrollPane = new JScrollPane(logArea);
 
         logPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // 创建按钮面板 - 竖向排列
+        // 创建按钮面板
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
         buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         buttonsPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
+        buttonsPanel.setMaximumSize(new Dimension(180, 200));
+        buttonsPanel.setBackground(new Color(230, 230, 230));
 
-        // 添加动作按钮 - 竖向排列
-        String[] buttonLabels = {"Move To", "Shore Up", "Pass To", "Capture",
-                "Lift Off", "Special Actions", "Next", "Discard","Clear"};
+        // 添加移动按钮
+        JButton moveButton = new JButton("Move To");
+        moveButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        moveButton.setMaximumSize(new Dimension(150, 30));
+        moveButton.addActionListener(e -> {
+            if (gameController.moveCurrentPlayer()) {
+                updateGameBoard();
+                logArea.append("移动成功！\n");
+            } else {
+                logArea.append("无法移动到该位置！\n");
+            }
+        });
 
-        for (String label : buttonLabels) {
-            JButton button = new JButton(label);
-            button.setAlignmentX(Component.CENTER_ALIGNMENT);
-            button.setMaximumSize(new Dimension(150, 30));
-            button.setMargin(new Insets(2, 2, 2, 2)); // 减小按钮内边距
-            buttonsPanel.add(button);
-            buttonsPanel.add(Box.createVerticalStrut(5)); // 按钮之间添加间距
-        }
+        // 添加其他按钮
+        JButton shoreUpButton = new JButton("Shore Up");
+        shoreUpButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        shoreUpButton.setMaximumSize(new Dimension(150, 30));
+
+        JButton giveCardButton = new JButton("Give Card");
+        giveCardButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        giveCardButton.setMaximumSize(new Dimension(150, 30));
+
+        JButton treasureButton = new JButton("Capture Treasure");
+        treasureButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        treasureButton.setMaximumSize(new Dimension(150, 30));
+
+        JButton endTurnButton = new JButton("End Turn");
+        endTurnButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        endTurnButton.setMaximumSize(new Dimension(150, 30));
+
+        // 添加按钮到面板
+        buttonsPanel.add(moveButton);
+        buttonsPanel.add(Box.createVerticalStrut(5));
+        buttonsPanel.add(shoreUpButton);
+        buttonsPanel.add(Box.createVerticalStrut(5));
+        buttonsPanel.add(giveCardButton);
+        buttonsPanel.add(Box.createVerticalStrut(5));
+        buttonsPanel.add(treasureButton);
+        buttonsPanel.add(Box.createVerticalStrut(5));
+        buttonsPanel.add(endTurnButton);
+
+        // 添加当前玩家信息面板
+        JPanel currentPlayerPanel = new JPanel();
+        currentPlayerPanel.setLayout(new BoxLayout(currentPlayerPanel, BoxLayout.Y_AXIS));
+        currentPlayerPanel.setBorder(BorderFactory.createTitledBorder("Current Player"));
+        currentPlayerPanel.setMaximumSize(new Dimension(180, 100));
+        currentPlayerPanel.setBackground(new Color(230, 230, 230));
+
+        // 显示当前玩家信息
+        Player currentPlayer = gameController.getCurrentPlayer();
+        JLabel playerRoleLabel = new JLabel("Role: " + currentPlayer.getRoletype().name());
+        playerRoleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel playerActionLabel = new JLabel("Actions Left: " + currentPlayer.getActions());
+        playerActionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        currentPlayerPanel.add(playerRoleLabel);
+        currentPlayerPanel.add(Box.createVerticalStrut(5));
+        currentPlayerPanel.add(playerActionLabel);
 
         // 添加所有组件到信息面板
         infoPanel.add(titleLabel);
         infoPanel.add(Box.createVerticalStrut(5));
         infoPanel.add(gameLabel);
         infoPanel.add(islandLabel);
-        infoPanel.add(Box.createVerticalStrut(5));
-        infoPanel.add(createdByLabel);
-        infoPanel.add(teamLabel);
         infoPanel.add(Box.createVerticalStrut(10));
-        infoPanel.add(configPanel);
-        infoPanel.add(Box.createVerticalStrut(5));
-        infoPanel.add(startButton);
+        infoPanel.add(currentPlayerPanel);
         infoPanel.add(Box.createVerticalStrut(10));
         infoPanel.add(logPanel);
         infoPanel.add(Box.createVerticalStrut(10));
@@ -272,57 +358,189 @@ public class GameFrame extends JFrame {
         return panel;
     }
 
-    // 创建右侧第二列面板(右列2：只包含洪水弃牌区)
+    // 创建右侧第二列（洪水牌区）
     private JPanel createRightColumn2() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel();
         panel.setPreferredSize(new Dimension(150, 600));
+        panel.setBackground(new Color(200, 230, 250)); // 淡蓝色
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        // 创建洪水弃牌区
-        JPanel floodPanel = new JPanel();
-        floodPanel.setBackground(new Color(82, 143, 219)); // 蓝色背景
-        JLabel floodLabel = new JLabel("Flood Discard:");
-        floodLabel.setForeground(Color.WHITE);
-        floodPanel.add(floodLabel);
+        // 添加洪水牌标题
+        JLabel titleLabel = new JLabel("Flood Cards");
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
 
-        panel.add(floodPanel, BorderLayout.CENTER);
+        // 洪水牌抽牌堆
+        JPanel drawPilePanel = new JPanel();
+        drawPilePanel.setBorder(BorderFactory.createTitledBorder("Draw Pile"));
+        drawPilePanel.setMaximumSize(new Dimension(140, 100));
+        drawPilePanel.setBackground(new Color(230, 240, 255));
+        drawPilePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JPanel cardPanel = new JPanel();
+        cardPanel.setPreferredSize(new Dimension(80, 60));
+        cardPanel.setBackground(new Color(0, 102, 204));
+        cardPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+
+        JLabel cardCountLabel = new JLabel("24 cards");
+        cardCountLabel.setForeground(Color.WHITE);
+        cardPanel.add(cardCountLabel);
+        drawPilePanel.add(cardPanel);
+
+        // 洪水牌弃牌堆
+        JPanel discardPilePanel = new JPanel();
+        discardPilePanel.setBorder(BorderFactory.createTitledBorder("Discard Pile"));
+        discardPilePanel.setMaximumSize(new Dimension(140, 400));
+        discardPilePanel.setBackground(new Color(230, 240, 255));
+        discardPilePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        discardPilePanel.setLayout(new BoxLayout(discardPilePanel, BoxLayout.Y_AXIS));
+
+        // 添加几个示例弃牌
+        for (int i = 0; i < 3; i++) {
+            JPanel discardCard = new JPanel();
+            discardCard.setMaximumSize(new Dimension(120, 40));
+            discardCard.setBackground(new Color(173, 216, 230));
+            discardCard.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            discardCard.setAlignmentX(Component.CENTER_ALIGNMENT);
+            discardCard.add(new JLabel("Flood " + (i + 1)));
+            discardPilePanel.add(discardCard);
+            discardPilePanel.add(Box.createVerticalStrut(5));
+        }
+
+        // 水位指示器
+        JPanel waterLevelPanel = new JPanel();
+        waterLevelPanel.setBorder(BorderFactory.createTitledBorder("Water Level"));
+        waterLevelPanel.setMaximumSize(new Dimension(140, 60));
+        waterLevelPanel.setBackground(new Color(230, 240, 255));
+        waterLevelPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JProgressBar waterLevelBar = new JProgressBar(0, 10);
+        waterLevelBar.setValue(1);
+        waterLevelBar.setStringPainted(true);
+        waterLevelBar.setString("Level 1");
+        waterLevelBar.setPreferredSize(new Dimension(120, 20));
+        waterLevelPanel.add(waterLevelBar);
+
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(drawPilePanel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(discardPilePanel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(waterLevelPanel);
 
         return panel;
     }
 
-    // 创建底部面板（下方两个玩家的棋子和卡牌）
+    // 创建底部面板
     private JPanel createBottomPanel() {
         JPanel panel = new JPanel();
-        panel.setBackground(Color.LIGHT_GRAY);
         panel.setPreferredSize(new Dimension(1024, 50));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 10)); // 增加间距为20
+        panel.setBackground(new Color(70, 130, 180)); // 钢蓝色
 
-        // 添加2个玩家区域
-        for (int player = 0; player < 2; player++) {
-            // 创建玩家棋子（红色方块）
-            JPanel playerPiece = new JPanel();
-            playerPiece.setPreferredSize(new Dimension(30, 30));
-            playerPiece.setBackground(Color.RED);
-            panel.add(playerPiece);
+        JButton saveButton = new JButton("Save Game");
+        JButton loadButton = new JButton("Load Game");
+        JButton quitButton = new JButton("Quit Game");
 
-            // 在每个玩家后面添加5个白色方块（卡牌）
-            for (int card = 0; card < 5; card++) {
-                JPanel cardPanel = new JPanel();
-                cardPanel.setPreferredSize(new Dimension(30, 30));
-                cardPanel.setBackground(Color.WHITE);
-                cardPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                panel.add(cardPanel);
-            }
+        panel.add(saveButton);
+        panel.add(loadButton);
+        panel.add(quitButton);
 
-            // 如果不是最后一个玩家，添加一个间隔
-            if (player < 1) {
-                JPanel spacer = new JPanel();
-                spacer.setPreferredSize(new Dimension(30, 30));
-                spacer.setBackground(Color.LIGHT_GRAY);
-                panel.add(spacer);
+        return panel;
+    }
+
+    // 更新游戏界面
+    private void updateGameBoard() {
+        // 清空所有格子的玩家标记
+        for (int y = 0; y < 6; y++) {
+            for (int x = 0; x < 6; x++) {
+                JPanel tilePanel = tilePanels[y][x];
+                tilePanel.removeAll();
+
+                // 重新添加标签
+                JLabel tileLabel = new JLabel();
+                tileLabel.setHorizontalAlignment(JLabel.CENTER);
+                tilePanel.add(tileLabel, BorderLayout.CENTER);
+
+                // 添加名称标签
+                JLabel nameLabel = new JLabel((x + 1) + "," + (y + 1));
+                nameLabel.setHorizontalAlignment(JLabel.CENTER);
+                nameLabel.setBackground(new Color(210, 180, 140));
+                nameLabel.setOpaque(true);
+                tilePanel.add(nameLabel, BorderLayout.SOUTH);
+
+                // 设置默认颜色
+                tilePanel.setBackground(new Color(200, 200, 160));
+
+                // 检查是否有洪水
+                Tile tile = gameController.findTileAt(x + 1, y + 1);
+                if (tile != null && tile.isFlooded()) {
+                    tilePanel.setBackground(new Color(100, 180, 255)); // 淡蓝色表示被淹没
+                }
             }
         }
 
-        return panel;
-    }
-}
+        // 高亮选中的格子
+        Tile selectedTile = gameController.getSelectedTile();
+        if (selectedTile != null) {
+            int x = selectedTile.getPosition().x - 1;
+            int y = selectedTile.getPosition().y - 1;
+            if (x >= 0 && x < 6 && y >= 0 && y < 6) {
+                tilePanels[y][x].setBackground(new Color(255, 255, 0)); // 黄色高亮
+            }
+        }
 
+        // 显示玩家位置
+        for (Player player : gameController.getGameBoard().getPlayers()) {
+            if (player.getCurrentPosition() != null) {
+                Point pos = player.getCurrentPosition().getPosition();
+                if (pos != null) {
+                    int x = pos.x - 1;
+                    int y = pos.y - 1;
+                    if (x >= 0 && x < 6 && y >= 0 && y < 6) {
+                        JPanel tilePanel = tilePanels[y][x];
+                        JLabel playerLabel = (JLabel) tilePanel.getComponent(0);
+
+                        // 设置玩家图标
+                        ImageIcon playerIcon = createPlayerIcon(player.getColor());
+                        if (playerIcon != null) {
+                            playerLabel.setIcon(playerIcon);
+                        } else {
+                            // 如果没有图标，则使用文本表示
+                            switch (player.getColor()) {
+                                case "RED":
+                                    playerLabel.setText("E"); // Engineer
+                                    playerLabel.setForeground(Color.RED);
+                                    break;
+                                case "BLUE":
+                                    playerLabel.setText("P"); // Pilot
+                                    playerLabel.setForeground(Color.BLUE);
+                                    break;
+                                case "GREEN":
+                                    playerLabel.setText("X"); // Explorer
+                                    playerLabel.setForeground(Color.GREEN);
+                                    break;
+                                case "BLACK":
+                                    playerLabel.setText("D"); // Diver
+                                    playerLabel.setForeground(Color.BLACK);
+                                    break;
+                            }
+                            playerLabel.setFont(new Font("Arial", Font.BOLD, 20));
+                        }
+                    }
+                }
+            }
+        }
+
+        // 刷新UI
+        revalidate();
+        repaint();
+    }
+
+    // 创建玩家图标
+    private ImageIcon createPlayerIcon(String color) {
+        // 这里应该返回根据角色颜色加载的图标
+        return null;
+    }
+    }
