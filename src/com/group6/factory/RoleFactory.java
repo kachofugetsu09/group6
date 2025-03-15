@@ -7,21 +7,32 @@ import com.group6.entity.player.role.*;
 public class RoleFactory {
 
     public static Player createRole(RoleType type) {
+        Player player;
         switch (type) {
             case ENGINEER:
-                return new Engineer();
+                player =new Engineer();
+                break;
             case PILOT:
-                return new Pilot();
+                player =new Pilot();
+                break;
             case NAVIGATOR:
-                return new Navigator();
+                player =new Navigator();
+                break;
             case DIVER:
-                return new Diver();
+                player =new Diver();
+                break;
             case EXPLORER:
-                return new Explorer();
+                player =new Explorer();
+                break;
             case MESSENGER:
-                return new Messenger();
+                player = new Messenger();
+                break;
             default:
                 throw new IllegalArgumentException("未知的角色类型: " + type);
         }
+        player.setRoletype(type);
+        return player;
+
+
     }
 }
