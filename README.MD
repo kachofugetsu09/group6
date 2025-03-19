@@ -1,3 +1,9 @@
+每日工作流程:
+1. 拉取最新主分支: git pull origin main
+2. 更新你的功能分支: git checkout yourbranchname && git merge main
+3. 开发你的功能
+4. 提交更改: git commit -m "有意义的提交信息"
+5. 推送到远程: 提交推送
 # 沉没之岛游戏开发任务清单
 
 ## Player模块开发任务
