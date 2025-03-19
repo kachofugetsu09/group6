@@ -1,5 +1,6 @@
 package com.group6.entity.common;
 
+import com.group6.controller.GameController;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,4 +26,5 @@ public class Tile {
         int dy = Math.abs(this.position.y - other.position.y);
         return (dx == 1 && dy == 0) || (dx == 0 && dy == 1);
     }
+
 }

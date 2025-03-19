@@ -14,9 +14,20 @@ public class GameController {
     private Player currentPlayer;
     private Tile selectedTile;
 
+    private static GameController instance;
+
     public GameController() {
         initializeGame();
     }
+
+    public static GameController getInstance() {
+        if (instance == null) {
+            instance = new GameController();
+        }
+        return instance;
+    }
+
+
 
     private void initializeGame() {
         // 创建游戏板
