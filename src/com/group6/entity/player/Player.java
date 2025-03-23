@@ -16,7 +16,7 @@ import java.util.ArrayList;
 @Setter
 @Getter
 public abstract class Player {
-    //当前玩家职业
+    //当前玩家职业234
     private RoleType roletype;
     //当前玩家颜色
     private String  color;
