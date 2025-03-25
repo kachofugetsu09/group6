@@ -12,11 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Setter
 @Getter
 public class Pilot extends Player {
-    GameController gameController = GameController.getInstance();
 
     @Override
     public void performSpecialAbility(Object... params) {
@@ -24,7 +22,7 @@ public class Pilot extends Player {
 
     public List<Tile> getAvailableDestinations(){
         List<Tile> result = new ArrayList<>();
-        List<Tile> tiles = gameController.getGameBoard().getTiles();
+        List<Tile> tiles = getGameController().getGameBoard().getTiles();
         for(Tile tile:tiles){
             if(!tile.isFlooded()){
                 result.add(tile);

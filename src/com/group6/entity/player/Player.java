@@ -29,7 +29,7 @@ public abstract class Player {
     private boolean hasTurn;
     private Card selectedCard =null;
 
-    GameController gameController = GameController.getInstance();
+    GameController gameController;
 
 
     // 回合管理

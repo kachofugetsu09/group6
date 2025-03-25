@@ -5,7 +5,6 @@ import com.group6.entity.common.Tile;
 import com.group6.entity.gameBoard.GameBoard;
 import com.group6.entity.player.Player;
 import com.group6.entity.player.SwimmingStrategy;
-import com.sun.org.apache.xpath.internal.operations.Div;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 public class Diver extends Player  implements SwimmingStrategy {
