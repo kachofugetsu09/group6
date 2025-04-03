@@ -16,5 +16,4 @@ public class Card {
     private String name;
     private Player owner;
 
-
 }

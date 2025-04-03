@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import com.group6.entity.common.Card;
 import com.group6.entity.common.CardType;
+import com.group6.factory.CardFactory;
 
 public class TreasureDeck extends Deck {
 
@@ -17,22 +18,22 @@ public class TreasureDeck extends Deck {
 
     protected void initialize(int waterRiseCount) {
         for (int i = 0; i < 5; i++) {
-            deck.add(new Card(CardType.TREASURE, "Lion", null));
-            deck.add(new Card(CardType.TREASURE, "Statue", null));
-            deck.add(new Card(CardType.TREASURE, "Crystal", null));
-            deck.add(new Card(CardType.TREASURE, "Cup", null));
+            deck.add(CardFactory.createCard(CardType.TREASURE, "Lion"));
+            deck.add(CardFactory.createCard(CardType.TREASURE, "Statue"));
+            deck.add(CardFactory.createCard(CardType.TREASURE, "Crystal"));
+            deck.add(CardFactory.createCard(CardType.TREASURE, "Cup"));
         }
 
         for (int i = 0; i < 3; i++) {
-            deck.add(new Card(CardType.HELICOPTER, "Helicopter", null));
+            deck.add(CardFactory.createCard(CardType.HELICOPTER, null));
         }
 
         for (int i = 0; i < 2; i++) {
-            deck.add(new Card(CardType.SANDBAG, "Sandbag", null));
+            deck.add(CardFactory.createCard(CardType.SANDBAG, null));
         }
 
         for (int i = 0; i < waterRiseCount; i++) {
-            deck.add(new Card(CardType.WATERS_RISE, "Waters Rise", null));
+            deck.add(CardFactory.createCard(CardType.WATERS_RISE, null));
         }
 
         Collections.shuffle(deck);
