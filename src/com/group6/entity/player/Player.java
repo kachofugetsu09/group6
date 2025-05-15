@@ -72,8 +72,8 @@ public abstract class Player {
 
     public abstract void performSpecialAbility(Object... params);
 
-    public void shoreUp(Tile tile){
-        if(!tile.isFlooded()){
+    public void shoreUp(Tile tile){// 如果flood但没有sunk，就可以提起来，否则没flooded或已经sunk都不能抬起来
+        if(tile.isSunk() || !tile.isFlooded()){
             return;
         }
         if(this.getCurrentPosition().isNearBy(tile)&&actions>0){

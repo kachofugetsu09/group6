@@ -14,4 +14,12 @@ public class GameBoard {
     private List<Player> players;
 
 
+
+    public void getTiles(){
+        return tiles;
+    }
+
+    public void getPlayers(){
+        return players;
+    }
 }
