@@ -1,5 +1,6 @@
 package com.group6.entity.common;
 
+import com.group6.controller.GameController;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,6 +11,7 @@ import java.awt.Point;
 public class Tile {
     private String name;
     private boolean flooded;
+
     private boolean sunk;
     // 添加位置信息
     private Point position;
@@ -17,6 +19,7 @@ public class Tile {
     public Tile(String name, int x, int y) {//
         this.name = name;
         this.flooded = false;
+        this.sunk = false;
         this.position = new Point(x, y);
     }
 
@@ -26,6 +29,7 @@ public class Tile {
         int dy = Math.abs(this.position.y - other.position.y);
         return (dx == 1 && dy == 0) || (dx == 0 && dy == 1);
     }
+
 
     public void initializeTiles(){
         List<int[]> positions = List.of(

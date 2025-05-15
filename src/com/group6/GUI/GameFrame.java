@@ -64,6 +64,16 @@ public class GameFrame extends JFrame {
         setVisible(true);
     }
 
+
+    public void setGameController(GameController gameController) {
+        this.gameController = gameController;
+    }
+
+
+    public GameController getGameController() {
+        return this.gameController;
+    }
+
     // 创建顶部面板
     private JPanel createTopPanel() {
         JPanel panel = new JPanel();
@@ -493,6 +503,7 @@ public class GameFrame extends JFrame {
 
         // 显示玩家位置
         for (Player player : gameController.getGameBoard().getPlayers()) {
+            player.setGameController(gameController);
             if (player.getCurrentPosition() != null) {
                 Point pos = player.getCurrentPosition().getPosition();
                 if (pos != null) {
