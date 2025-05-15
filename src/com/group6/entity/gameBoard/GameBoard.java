@@ -15,4 +15,12 @@ public class GameBoard {
 
     System.out.println("GameBoard");
 
+
+    public void getTiles(){
+        return tiles;
+    }
+
+    public void getPlayers(){
+        return players;
+    }
 }
