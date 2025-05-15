@@ -20,15 +20,26 @@ public class GameController {
     private Player currentPlayer;
     private Tile selectedTile;
 
-    //牌堆部分
+  //牌堆部分
     private TreasureDeck treasureDeck;
     private FloodDeck floodDeck;
     private WaterMeter waterMeter;
+
+    private static GameController instance;
 
 
     public GameController() {
         initializeGame();
     }
+
+    public static GameController getInstance() {
+        if (instance == null) {
+            instance = new GameController();
+        }
+        return instance;
+    }
+
+
 
     private void initializeGame() {
         // 创建游戏板

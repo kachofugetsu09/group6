@@ -13,6 +13,5 @@ public class GameBoard {
     private List<Tile> tiles;
     private List<Player> players;
 
-    System.out.println("GameBoard");
 
 }
