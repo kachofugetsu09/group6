@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Setter
@@ -15,12 +16,13 @@ public class GameBoard {
     private List<Tile> tiles;
     private List<Treasure> treasures;
     private List<Player> players;
-
+   
     public GameBoard() {
         tiles = new ArrayList<>();
         treasures = new ArrayList<>();
         players = new ArrayList<>();
     }
+
 
 
     public List<Tile> getTiles() {
@@ -34,4 +36,6 @@ public class GameBoard {
     public List<Treasure> getTreasures() {
         return treasures;
     }
+
+    
 }

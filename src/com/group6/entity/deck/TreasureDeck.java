@@ -18,10 +18,10 @@ public class TreasureDeck extends Deck {
 
     protected void initialize(int waterRiseCount) {
         for (int i = 0; i < 5; i++) {
-            deck.add(CardFactory.createCard(CardType.TREASURE, "Lion"));
-            deck.add(CardFactory.createCard(CardType.TREASURE, "Statue"));
-            deck.add(CardFactory.createCard(CardType.TREASURE, "Crystal"));
-            deck.add(CardFactory.createCard(CardType.TREASURE, "Cup"));
+            deck.add(CardFactory.createCard(CardType.TREASURE, "The Earth Stone"));
+            deck.add(CardFactory.createCard(CardType.TREASURE, "The Crystal of Fire"));
+            deck.add(CardFactory.createCard(CardType.TREASURE, "The Statue of the Wind"));
+            deck.add(CardFactory.createCard(CardType.TREASURE, "The Ocean's Chalice"));
         }
 
         for (int i = 0; i < 3; i++) {

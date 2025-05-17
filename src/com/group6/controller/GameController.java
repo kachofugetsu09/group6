@@ -67,14 +67,22 @@ public class GameController {
         }
 
 
-        // 创建6x6的瓷砖
+        // 创建24个瓷砖
         List<Tile> tiles = new ArrayList<>();
         // 预定义的瓦片名称，可以根据游戏规则自定义
         String[] tileNames = {
-            "失落之桥", "黄昏花园", "破碎神殿", "珊瑚宫殿", "珊瑚宫殿", "幽灵岛",
-            "银色门户", "青铜门", "铜门", "愚者降落点", "金门", "铁门",
-            "狮子门", "迷雾沼泽", "神秘沙丘", "海洋之眼", "鹦鹉通道", "发现地",
-            "旋风岛", "珊瑚礁", "日出之地", "守望高地", "旋涡花园", "啸风悬崖"
+            "Temple of the Moon", "Temple of the Sun",
+                "Coral Palace", "Tidal Palace",
+                "Cave of Embers", "Cave of Shadows",
+                "Whispering Garden", "Howling Garden",
+                "Bronze Gate", "Silver Gate",
+                "Gold Gate", "Iron Gate",
+                "Fools' Landing", "Observatory",
+                "Crimson Forest", "Lost Lagoon",
+                "Dunes of Deception", "Phantom Rock",
+                "Breakers Bridge", "Cliffs of Abandon",
+                "Misty Marsh", "Watchtower",
+                "Twilight Hollow", "Flooded Ruins"
         };
         for (int i = 0; i < 24; i++) {
             // 创建瓦片，初始位置为(0,0)，稍后会随机分配位置
@@ -85,6 +93,16 @@ public class GameController {
         // 使用Tile类的方法随机初始化瓦片位置
         Tile tempTile = new Tile("临时瓦片", 0, 0);
         tempTile.initializeTiles();
+
+        //初始化8个宝藏 和 4个宝藏的全局统计
+        List<Treasure> treasures = new ArrayList<>();
+        Treasure.initializeTreasures(treasures);//初始化8个宝藏
+        HashMap<String,Boolean> capturedTreasures = new HashMap<>();
+        capturedTreasures.put("The Earth Stone", false);
+        capturedTreasures.put("The Crystal of Fire", false);
+        capturedTreasures.put("The Statue of the Wind", false);
+        capturedTreasures.put("The Ocean's Chalice", false);
+
 
         // 创建四个角色
         List<Player> players = new ArrayList<>();
@@ -173,5 +191,7 @@ public class GameController {
         return selectedTile;
     }
 
-
+    public HashMap<String,Boolean> getCapturedTreasures(){
+        return capturedTreasures;
+    }
 }

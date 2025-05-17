@@ -14,10 +14,10 @@ import java.util.List;
 public class Tile {
     private String name;
     private boolean flooded;
-
     private boolean sunk;
     // 添加位置信息
     private Point position;
+    private boolean isFoolsLanding;
 
     private boolean hasTreasure;
     private Treasure treasure;
@@ -63,6 +63,7 @@ public class Tile {
         
         // 获取游戏板上的所有瓦片
         List<Tile> tiles = GameBoard.getTiles();
+        tiles.get(0).setFoolsLanding(true);//随便找一个，后面随机放位置
         
         // 为每个瓦片分配一个随机位置
         for(int i = 0; i < Math.min(tiles.size(), positions.size()); i++) {
@@ -132,5 +133,17 @@ public class Tile {
 
     public void setName(String name) {
         this.name = name;
-    }   
+    }  
+
+    public ArrayList<Point> getPositions(){
+        return ArrayList<Point> positions;
+    }
+
+    public boolean getIsFoolsLanding(){
+        return isFoolsLanding;
+    }
+
+    public void setFoolsLanding(boolean isFoolsLanding){
+        this.isFoolsLanding = isFoolsLanding;
+    }
 }

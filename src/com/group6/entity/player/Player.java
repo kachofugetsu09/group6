@@ -28,6 +28,7 @@ public abstract class Player {
     private int actions;
     private boolean hasTurn;
     private Card selectedCard =null;
+    private boolean isStandingOnTreasure = false;   //是否站在宝藏上
 
     GameController gameController;
 
@@ -60,7 +61,21 @@ public abstract class Player {
         }
         this.currentPosition = destination;
         this.actions--;
+        if(destination.isTreasure()){
+            this.isStandingOnTreasure = true;
+        }
         return true;
+    }
+
+    public boolean takeTreasure(){//如果站在宝藏上，则可以带走宝藏  ，后面还要加进去：如果手牌数可以，并且玩家选择带走宝藏，则可以带走宝藏
+        if(this.isStandingOnTreasure && countCardNumbers(this.currentPosition.getTreasure().getName(),this.hand)>=4){
+            this.currentPosition.setTreasure(null); //表示tile没有宝物，用于更新地图
+            String treasureName = this.currentPosition.getTreasure().getName();
+            this.currentPosition.getTreasure().setCaptured(true);//表示这个宝物已经拿到，用于更新地图
+            GameController.getCapturedTreasures().put(treasureName, true);//在controller里面表示这中宝物已经拿到
+            return true;
+        }
+        return false;
     }
 
     protected boolean canMoveTo(Tile destination) {
@@ -83,6 +98,16 @@ public abstract class Player {
     };
     public boolean isMoveAble(){
         return this.actions>0;
+    }
+
+    public int countCardNumbers(String cardName,ArrayList<Card> hand){//计算手牌中有几张某个牌
+        int count = 0;
+        for(Card card:hand){
+            if(card.getName().equals(cardName)){
+                count++;
+            }
+        }
+        return count;
     }
 
     public boolean passCardTo(Player other,Card card){

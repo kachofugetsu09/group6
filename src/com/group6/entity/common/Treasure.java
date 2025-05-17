@@ -13,8 +13,7 @@ import lombok.Setter;
 public class Treasure {
     private String name;
     private Point position;
-    private boolean isFound;
-    private boolean captured;
+    private boolean captured;//这个是用来表示被拿了之后，用来消除地图上的图标用的。统计四个宝箱是否被拿全是在GameController里的hashmap
 
     public Treasure(String name, Point position){
         this.name = name;
@@ -23,13 +22,15 @@ public class Treasure {
         this.captured = false;
     }
 
-    public <Treasure> treasures initializeTreasures(){
-        List<Treasure> treasures = new ArrayList<>();
-        List<String> treasureNames = Arrays.asList("Crystal Skull", "Golden Idol", "Ancient Coin");
+    public <Treasure> treasures initializeTreasures(List<Treasure> treasures){
+        List<String> treasureNames = Arrays.asList("The Earth Stone","The Crystal of Fire", "The Statue of the Wind", "The Ocean's Chalice");
+        ArrayList<Point> positions = Tile.getPositions();
 
         for(int i = 0; i < 8; i++){
             Treasure treasure = new Treasure(treasureNames.get(i%4), get);
             treasures.add(treasure);
+            Collections.shuffle(positions, null);
+            treasure.position =  positions.get(i);
         }
     }
 
@@ -49,21 +50,13 @@ public class Treasure {
         }
 
 
-
+    
     public String getName(){
         return name;
     }
     
     public Point getPosition(){
         return position;
-    }
-
-    public boolean isFound(){
-        return isFound;
-    }
-
-    public void setFound(boolean isFound){
-        this.isFound = isFound;
     }
 
     public void setPosition(Point position){
