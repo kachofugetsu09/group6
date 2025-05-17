@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Getter
 @Setter
@@ -15,6 +18,29 @@ public class Tile {
     private boolean sunk;
     // 添加位置信息
     private Point position;
+
+    private boolean hasTreasure;
+    private Treasure treasure;
+    
+    // 改为 ArrayList<Point> 以便能够被 shuffle
+    public static ArrayList<Point> positions = new ArrayList<>();
+    
+    // 静态初始化块，初始化 positions
+    static {
+        // 添加所有可能的位置
+        positions.add(new Point(1, 1)); positions.add(new Point(1, 2)); 
+        positions.add(new Point(1, 3)); positions.add(new Point(1, 4));
+        positions.add(new Point(2, 1)); positions.add(new Point(2, 2)); 
+        positions.add(new Point(2, 3)); positions.add(new Point(2, 4));
+        positions.add(new Point(3, 1)); positions.add(new Point(3, 2)); 
+        positions.add(new Point(3, 3)); positions.add(new Point(3, 4));
+        positions.add(new Point(4, 1)); positions.add(new Point(4, 2)); 
+        positions.add(new Point(4, 3)); positions.add(new Point(4, 4));
+        positions.add(new Point(1, 0)); positions.add(new Point(2, 0)); 
+        positions.add(new Point(3, 5)); positions.add(new Point(4, 5));
+        positions.add(new Point(0, 2)); positions.add(new Point(0, 3)); 
+        positions.add(new Point(5, 2)); positions.add(new Point(5, 3));
+    }
 
     public Tile(String name, int x, int y) {//
         this.name = name;
@@ -32,23 +58,18 @@ public class Tile {
 
 
     public void initializeTiles(){
-        List<int[]> positions = List.of(
-            new int[]{1, 1}, new int[]{1, 2}, new int[]{1, 3}, new int[]{1, 4},
-            new int[]{2, 1}, new int[]{2, 2}, new int[]{2, 3}, new int[]{2, 4},
-            new int[]{3, 1}, new int[]{3, 2}, new int[]{3, 3}, new int[]{3, 4},
-            new int[]{4, 1}, new int[]{4, 2}, new int[]{4, 3}, new int[]{4, 4},
-            new int[]{1, 0}, new int[]{2, 0}, new int[]{3, 5}, new int[]{4, 5},
-            new int[]{0, 2}, new int[]{0, 3}, new int[]{5, 2}, new int[]{5, 3}
-        );
+        // 使用 Collections.shuffle 来打乱位置顺序
         Collections.shuffle(positions);
-        for(int[] position : positions){
-            for (int i = 0; i < 24; i++){
-                List<Tile> tiles = GameBoard.getTiles();
-                tiles.get(i).setPosition(position[0]);
-                tiles.get(i).setFlooded(false);
-                tiles.get(i).setSunk(false);
-                tiles.get(i).setName(tiles.get(i).getName());
-            }
+        
+        // 获取游戏板上的所有瓦片
+        List<Tile> tiles = GameBoard.getTiles();
+        
+        // 为每个瓦片分配一个随机位置
+        for(int i = 0; i < Math.min(tiles.size(), positions.size()); i++) {
+            Point position = positions.get(i);
+            tiles.get(i).setPosition(position.x, position.y);
+            tiles.get(i).setFlooded(false);
+            tiles.get(i).setSunk(false);
         }
     }
 
@@ -59,9 +80,8 @@ public class Tile {
             this.flooded = true;
             this.sunk = false;
         }
-
     }
-    
+
     //上升操作已经在player 的 shoreup实现了
     // public void tileRise(){//上升一个状态  sunk -> flood 或者 flood -> 没flood
     //     if(this.sunk){
@@ -71,6 +91,24 @@ public class Tile {
     //         this.flooded = false;
     //     }
     // }
+
+    public void setTreasure(Treasure treasure){
+        this.hasTreasure = true;
+        this.treasure = treasure;
+    }
+
+    public void removeTreasure(){
+        this.hasTreasure = false;
+        this.treasure = null;
+    }
+
+    public boolean hahasTreasure(){
+        return hasTreasure;
+    }
+
+    public Treasure getTreasure(){
+        return treasure;
+    }
 
     public void setPosition(int x, int y) {
         this.position = new Point(x, y);
@@ -95,6 +133,4 @@ public class Tile {
     public void setName(String name) {
         this.name = name;
     }   
-
- 
 }

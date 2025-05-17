@@ -3,6 +3,7 @@ package com.group6.controller;
 import com.group6.entity.common.Card;
 import com.group6.entity.common.RoleType;
 import com.group6.entity.common.Tile;
+import com.group6.entity.common.Treasure;
 import com.group6.entity.common.WaterMeter;
 import com.group6.entity.deck.FloodDeck;
 import com.group6.entity.deck.TreasureDeck;
@@ -12,6 +13,7 @@ import com.group6.factory.DeckFactory;
 import com.group6.factory.RoleFactory;
 import com.group6.utils.CardEffectUtils;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +47,8 @@ public class GameController {
         // 创建游戏板
         gameBoard = new GameBoard();
 
+
+        // 创建24个瓦片，使用Tile中定义的位置
         int initialRiseCount = 3;  // 宝藏牌里水位上升卡张数
         int startWaterLevel  = 1;  // 初始水位等级
         int maxWaterLevel    = 5;  // 最大水位等级（超出即失败）
@@ -63,45 +67,60 @@ public class GameController {
         }
 
 
-
-
         // 创建6x6的瓷砖
         List<Tile> tiles = new ArrayList<>();
-        for (int y = 1; y <= 6; y++) {
-            for (int x = 1; x <= 6; x++) {
-                tiles.add(new Tile("岛屿 " + x + "," + y, x, y));
-            }
+        // 预定义的瓦片名称，可以根据游戏规则自定义
+        String[] tileNames = {
+            "失落之桥", "黄昏花园", "破碎神殿", "珊瑚宫殿", "珊瑚宫殿", "幽灵岛",
+            "银色门户", "青铜门", "铜门", "愚者降落点", "金门", "铁门",
+            "狮子门", "迷雾沼泽", "神秘沙丘", "海洋之眼", "鹦鹉通道", "发现地",
+            "旋风岛", "珊瑚礁", "日出之地", "守望高地", "旋涡花园", "啸风悬崖"
+        };
+        for (int i = 0; i < 24; i++) {
+            // 创建瓦片，初始位置为(0,0)，稍后会随机分配位置
+            tiles.add(new Tile(tileNames[i], 0, 0));
         }
         gameBoard.setTiles(tiles);
+        
+        // 使用Tile类的方法随机初始化瓦片位置
+        Tile tempTile = new Tile("临时瓦片", 0, 0);
+        tempTile.initializeTiles();
 
         // 创建四个角色
         List<Player> players = new ArrayList<>();
-
-        // 工程师 (3,1)
+        
+        // 获取一些不同的瓦片用于放置玩家，确保玩家不会重叠
+        List<Tile> playerStartTiles = getRandomPlayerStartPositions(4);
+        
+        // 创建玩家并放置在初始位置
+        // 工程师
         Player engineer = RoleFactory.createRole(RoleType.ENGINEER);
         engineer.setColor("RED");
-        engineer.setCurrentPosition(findTileAt(3, 1));
+        engineer.setCurrentPosition(playerStartTiles.get(0));
         players.add(engineer);
 
-        // 飞行员 (1,3)
+        // 飞行员
         Player pilot = RoleFactory.createRole(RoleType.PILOT);
         pilot.setColor("BLUE");
-        pilot.setCurrentPosition(findTileAt(1, 3));
+        pilot.setCurrentPosition(playerStartTiles.get(1));
         players.add(pilot);
 
-        // 探险家 (4,6)
+        // 探险家
         Player explorer = RoleFactory.createRole(RoleType.EXPLORER);
         explorer.setColor("GREEN");
-        explorer.setCurrentPosition(findTileAt(4, 6));
+        explorer.setCurrentPosition(playerStartTiles.get(2));
         players.add(explorer);
 
-        // 潜水员 (6,4)
+        // 潜水员
         Player diver = RoleFactory.createRole(RoleType.DIVER);
         diver.setColor("BLACK");
-        diver.setCurrentPosition(findTileAt(6, 4));
+        diver.setCurrentPosition(playerStartTiles.get(3));
         players.add(diver);
 
         gameBoard.setPlayers(players);
+
+        // 初始化宝藏
+        initializeTreasures();
 
         // 设置当前玩家为工程师
         currentPlayer = engineer;
