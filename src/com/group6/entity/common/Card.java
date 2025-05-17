@@ -11,9 +11,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Card {
+    //类型名称
     private CardType type;
     private String name;
     private Player owner;
-
 
 }

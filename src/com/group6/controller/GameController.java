@@ -1,11 +1,17 @@
 package com.group6.controller;
 
+import com.group6.entity.common.Card;
 import com.group6.entity.common.RoleType;
 import com.group6.entity.common.Tile;
 import com.group6.entity.common.Treasure;
+import com.group6.entity.common.WaterMeter;
+import com.group6.entity.deck.FloodDeck;
+import com.group6.entity.deck.TreasureDeck;
 import com.group6.entity.gameBoard.GameBoard;
 import com.group6.entity.player.Player;
+import com.group6.factory.DeckFactory;
 import com.group6.factory.RoleFactory;
+import com.group6.utils.CardEffectUtils;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -16,15 +22,52 @@ public class GameController {
     private Player currentPlayer;
     private Tile selectedTile;
 
+  //牌堆部分
+    private TreasureDeck treasureDeck;
+    private FloodDeck floodDeck;
+    private WaterMeter waterMeter;
+
+    private static GameController instance;
+
+
     public GameController() {
         initializeGame();
     }
+
+    public static GameController getInstance() {
+        if (instance == null) {
+            instance = new GameController();
+        }
+        return instance;
+    }
+
+
 
     private void initializeGame() {
         // 创建游戏板
         gameBoard = new GameBoard();
 
+
         // 创建24个瓦片，使用Tile中定义的位置
+        int initialRiseCount = 3;  // 宝藏牌里水位上升卡张数
+        int startWaterLevel  = 1;  // 初始水位等级
+        int maxWaterLevel    = 5;  // 最大水位等级（超出即失败）
+
+    // 初始化水位计和牌堆
+        waterMeter   = new WaterMeter(startWaterLevel, maxWaterLevel);
+        treasureDeck = DeckFactory.createTreasureDeck(initialRiseCount);
+        floodDeck    = DeckFactory.createFloodDeck();
+
+    // 初始洪水：抽6张并作用到对应 Tile
+        List<Card> initFloods = floodDeck.getNCards(6);
+        for (Card c : initFloods) {
+            Tile t = findTileByName(c.getName());
+            CardEffectUtils.useFlood(t);
+            floodDeck.discard(c);
+        }
+
+
+        // 创建6x6的瓷砖
         List<Tile> tiles = new ArrayList<>();
         // 预定义的瓦片名称，可以根据游戏规则自定义
         String[] tileNames = {
@@ -109,6 +152,15 @@ public class GameController {
         return false;
     }
 
+    private Tile findTileByName(String name) {
+        for (Tile tile : gameBoard.getTiles()) {
+            if (tile.getName().equals(name)) {
+                return tile;
+            }
+        }
+        return null; // 如果找不到，可以返回 null 或抛异常，根据你的容错策略
+    }
+
     public GameBoard getGameBoard() {
         return gameBoard;
     }
@@ -120,4 +172,6 @@ public class GameController {
     public Tile getSelectedTile() {
         return selectedTile;
     }
+
+
 }

@@ -22,6 +22,7 @@ public class GameBoard {
         players = new ArrayList<>();
     }
 
+
     public List<Tile> getTiles() {
         return tiles;
     }
