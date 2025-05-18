@@ -21,7 +21,7 @@ public class GameController {
     private GameBoard gameBoard;
     private Player currentPlayer;
     private Tile selectedTile;
-
+    private GameDifficulty difficulty;
   //牌堆部分
     private TreasureDeck treasureDeck;
     private FloodDeck floodDeck;
@@ -145,6 +145,26 @@ public class GameController {
         currentPlayer.startTurn();
     }
 
+    // 在类的成员变量部分添加UI更新引用
+    private GameFrame gameFrame;
+
+    // 处理回合结束
+    public void endTurn() {
+        // 1. 抽取宝藏卡
+        drawTreasureCards();
+        
+        // 2. 抽取洪水卡
+        drawFloodCards();
+        
+        // 3. 切换到下一个玩家
+        switchToNextPlayer();
+        
+        // 4. 更新UI
+        if (gameFrame != null) {
+            gameFrame.updateGameBoard();
+        }
+    }
+
     // 根据坐标查找瓷砖
     public Tile findTileAt(int x, int y) {
         for (Tile tile : gameBoard.getTiles()) {
@@ -194,4 +214,32 @@ public class GameController {
     public HashMap<String,Boolean> getCapturedTreasures(){
         return capturedTreasures;
     }
+
+    public void handleWaterRise() {
+        waterMeter.increase();
+        floodDeck.putBack2Top();
+        checkGameOver();
+    }
+    
+    private void drawFloodCards() {
+        int cardsToDrawCount = waterMeter.getFloodCardsCount();
+        List<Card> drawnCards = floodDeck.getNCards(cardsToDrawCount);
+        for (Card card : drawnCards) {
+            Tile tile = findTileByName(card.getName());
+            if (tile != null) {
+                tile.tileDescend();
+            }
+            floodDeck.discard(card);
+        }
+    }
+    
+    private boolean checkGameOver() {
+        // 检查水位是否溢出
+        if (waterMeter.isOverflow()) {
+            return true;
+        }
+        return false;
+    }
+
+
 }

@@ -489,6 +489,7 @@ public class GameFrame extends JFrame {
                     tilePanel.setBackground(new Color(100, 180, 255)); // 淡蓝色表示被淹没
                 }
             }
+            updateWaterLevel();
         }
 
         // 高亮选中的格子

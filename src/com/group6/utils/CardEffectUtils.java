@@ -40,8 +40,8 @@ public class CardEffectUtils {
     // 使用水位上升卡：将洪水弃牌堆洗回牌堆顶部
     // 水位值的增加由外部 GameController/WaterMeter 负责
     public static void useWatersRise(FloodDeck floodDeck) {
-        if (floodDeck != null) {
-            floodDeck.putBack2Top();
+        if (floodDeck != null && gameController != null) {
+            gameController.handleWaterRise();
         }
     }
 
