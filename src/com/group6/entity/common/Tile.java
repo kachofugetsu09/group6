@@ -57,12 +57,9 @@ public class Tile {
     }
 
 
-    public void initializeTiles(){
+    public void initializeTiles(List<Tile> tiles){
         // 使用 Collections.shuffle 来打乱位置顺序
         Collections.shuffle(positions);
-        
-        // 获取游戏板上的所有瓦片
-        List<Tile> tiles = GameBoard.getTiles();
         tiles.get(0).setFoolsLanding(true);//随便找一个，后面随机放位置
         
         // 为每个瓦片分配一个随机位置
@@ -133,11 +130,12 @@ public class Tile {
 
     public void setName(String name) {
         this.name = name;
-    }  
-
-    public ArrayList<Point> getPositions(){
-        return ArrayList<Point> positions;
     }
+
+    public static ArrayList<Point> getPositions() {
+        return positions;
+    }
+
 
     public boolean getIsFoolsLanding(){
         return isFoolsLanding;

@@ -1,10 +1,6 @@
 package com.group6.controller;
 
-import com.group6.entity.common.Card;
-import com.group6.entity.common.RoleType;
-import com.group6.entity.common.Tile;
-import com.group6.entity.common.Treasure;
-import com.group6.entity.common.WaterMeter;
+import com.group6.entity.common.*;
 import com.group6.entity.deck.FloodDeck;
 import com.group6.entity.deck.TreasureDeck;
 import com.group6.entity.gameBoard.GameBoard;
@@ -21,7 +17,7 @@ public class GameController {
     private GameBoard gameBoard;
     private Player currentPlayer;
     private Tile selectedTile;
-    private GameDifficulty difficulty;
+    private Difficulty difficulty;
   //牌堆部分
     private TreasureDeck treasureDeck;
     private FloodDeck floodDeck;
@@ -48,21 +44,24 @@ public class GameController {
         gameBoard = new GameBoard();
 
 
-        // 创建24个瓦片，使用Tile中定义的位置
-        int initialRiseCount = 3;  // 宝藏牌里水位上升卡张数
-        int startWaterLevel  = 1;  // 初始水位等级
-        int maxWaterLevel    = 5;  // 最大水位等级（超出即失败）
+        // 替换为 Difficulty 初始化
+        Difficulty difficulty = Difficulty.MEDIUM; // TODO: 可从 UI 读取设置
+        this.difficulty = difficulty;
 
-    // 初始化水位计和牌堆
-        waterMeter   = new WaterMeter(startWaterLevel, maxWaterLevel);
+        int initialRiseCount = difficulty.getRiseCount();
+        waterMeter = new WaterMeter(difficulty);
         treasureDeck = DeckFactory.createTreasureDeck(initialRiseCount);
-        floodDeck    = DeckFactory.createFloodDeck();
+        floodDeck = DeckFactory.createFloodDeck();
 
-    // 初始洪水：抽6张并作用到对应 Tile
+
+        // 初始洪水：抽6张并作用到对应 Tile
         List<Card> initFloods = floodDeck.getNCards(6);
         for (Card c : initFloods) {
             Tile t = findTileByName(c.getName());
-            CardEffectUtils.useFlood(t);
+            if (t != null) {
+                // 替代 CardEffectUtils.useFlood()
+                t.tileDescend();
+            }
             floodDeck.discard(c);
         }
 
@@ -92,7 +91,7 @@ public class GameController {
         
         // 使用Tile类的方法随机初始化瓦片位置
         Tile tempTile = new Tile("临时瓦片", 0, 0);
-        tempTile.initializeTiles();
+        tempTile.initializeTiles(gameBoard.getTiles());
 
         //初始化8个宝藏 和 4个宝藏的全局统计
         List<Treasure> treasures = new ArrayList<>();
@@ -220,7 +219,7 @@ public class GameController {
         floodDeck.putBack2Top();
         checkGameOver();
     }
-    
+
     private void drawFloodCards() {
         int cardsToDrawCount = waterMeter.getFloodCardsCount();
         List<Card> drawnCards = floodDeck.getNCards(cardsToDrawCount);
@@ -232,7 +231,8 @@ public class GameController {
             floodDeck.discard(card);
         }
     }
-    
+
+
     private boolean checkGameOver() {
         // 检查水位是否溢出
         if (waterMeter.isOverflow()) {
