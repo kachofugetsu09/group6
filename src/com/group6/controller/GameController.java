@@ -15,6 +15,7 @@ import com.group6.utils.CardEffectUtils;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class GameController {
@@ -26,7 +27,7 @@ public class GameController {
     private TreasureDeck treasureDeck;
     private FloodDeck floodDeck;
     private WaterMeter waterMeter;
-
+    private int turnCounter = 1; // 回合计数器
     private static GameController instance;
 
 
@@ -238,8 +239,60 @@ public class GameController {
         if (waterMeter.isOverflow()) {
             return true;
         }
+
+
+        if (currentPlayer != null && !currentPlayer.hasMovablePosition()) {
+            return true;
+
+
+        }
+
         return false;
     }
 
+    // 在GameController类中添加
+    public void moveAllPlayers(Tile destination) {
+        if (destination == null || destination.isSunk()) { // 假设Tile有isSunk()方法判断是否沉没
+            return;
+        }
 
+        // 移动所有玩家到目标位置
+        for (Player player : gameBoard.getPlayers()) {
+            player.setCurrentPosition(destination);
+        }
+
+    }
+
+    // 发牌给玩家（自动处理上限和弃牌）
+    public boolean dealCardToPlayer(Player player, Card card) {
+        if (!player.addCard(card)) {
+            // 手牌已满，触发强制弃牌
+            handlePlayerDiscard(player);
+            return false;
+        }
+        return true;
+    }
+
+    // 处理玩家强制弃牌
+    private void handlePlayerDiscard(Player player) {
+        int discardCount = player.getRequiredDiscardCount();
+        if (discardCount <= 0) return;
+
+        // 此处简化为弃置前N张卡牌，实际应通过UI或AI选择
+        List<Card> cardsToDiscard = new ArrayList<>();
+        for (int i = 0; i < discardCount && i < player.getHand().size(); i++) {
+            cardsToDiscard.add(player.getHand().get(i));
+        }
+
+        for (Card card : cardsToDiscard) {
+            player.discardCard(card);
+            // 假设GameController有弃牌堆
+//            discardPile.add(card);
+        }
+    }
+
+    // 处理玩家间卡牌交换
+    public boolean processCardTrade(Player player1, Player player2, Card card1, Card card2) {
+        return player1.tradeCardWith(player2, card1, card2);
+    }
 }
