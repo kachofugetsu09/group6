@@ -21,20 +21,24 @@ public class Treasure {
         this.captured = false;
     }
 
-    public static void initializeTreasures(List<Treasure> treasures){
-        List<String> treasureNames = Arrays.asList("The Earth Stone","The Crystal of Fire", "The Statue of the Wind", "The Ocean's Chalice");
-        ArrayList<Point> positions = Tile.getPositions();
+    public static void initializeTreasures(List<Treasure> treasures) {
+        if (treasures == null) {
+            throw new IllegalArgumentException("Treasures cannot null");
+        }
 
-        for(int i = 0; i < 8; i++){
+        List<String> treasureNames = Arrays.asList("The Earth Stone", "The Crystal of Fire", "The Statue of the Wind", "The Ocean's Chalice");
+        ArrayList<Point> positions = Tile.getPositions();
+        Collections.shuffle(positions); // ✅ 在循环外洗牌一次
+
+        for (int i = 0; i < 8; i++) {
             Point pos = positions.get(i);
             Treasure treasure = new Treasure(treasureNames.get(i % 4), pos);
             treasures.add(treasure);
-            Collections.shuffle(positions, null);
-            treasure.position =  positions.get(i);
         }
     }
 
-        public static List<Integer>  generateRandomNumber() {//在0-23中生成8个不重复的随机数
+
+    public static List<Integer>  generateRandomNumber() {//在0-23中生成8个不重复的随机数
             // 创建一个包含0到23的列表
             List<Integer> numbers = new ArrayList<>();
             for (int i = 0; i < 24; i++) {

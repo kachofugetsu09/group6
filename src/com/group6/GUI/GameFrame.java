@@ -1,6 +1,7 @@
 package com.group6.GUI;
 
 import com.group6.controller.GameController;
+import com.group6.entity.common.Card;
 import com.group6.entity.common.Tile;
 import com.group6.entity.player.Player;
 
@@ -8,11 +9,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 
 public class GameFrame extends JFrame {
     private GameController gameController;
     // 存储每个格子的面板引用
     private JPanel[][] tilePanels;
+    // 卡牌的面板引用
+    private DefaultListModel<Card> cardListModel;
     // 游戏日志区域
     private JTextArea logArea;
 
@@ -117,23 +121,44 @@ public class GameFrame extends JFrame {
         cardsPanel.setMaximumSize(new Dimension(140, 280));
         cardsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // 添加牌区占位符
-        for (int i = 0; i < 5; i++) {
-            JPanel cardSlot = new JPanel();
-            cardSlot.setPreferredSize(new Dimension(120, 40));
-            cardSlot.setMaximumSize(new Dimension(120, 40));
-            cardSlot.setBackground(new Color(255, 250, 205)); // 淡黄色
-            cardSlot.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            cardSlot.setAlignmentX(Component.CENTER_ALIGNMENT);
-            cardSlot.add(new JLabel("Card " + (i + 1)));
-            cardsPanel.add(cardSlot);
-            cardsPanel.add(Box.createVerticalStrut(5));
-        }
+        // 创建 JList 模型与列表
+        DefaultListModel<Card> cardListModel = new DefaultListModel<>();
+        JList<Card> cardList = new JList<>(cardListModel);
+        cardList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        cardList.setVisibleRowCount(5);
+        cardList.setFixedCellHeight(40);
+        cardList.setFixedCellWidth(120);
+        cardList.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
+        // 自定义渲染器（显示卡牌名称）
+        cardList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            JLabel label = new JLabel();
+            label.setText(value.getName() != null ? value.getName() : value.getType().name());
+            label.setOpaque(true);
+            label.setFont(new Font("Arial", Font.PLAIN, 12));
+            label.setBackground(isSelected ? Color.YELLOW : new Color(255, 250, 205));
+            return label;
+        });
+
+        // 点击选中卡牌
+        cardList.addListSelectionListener(e -> {
+            Card selectedCard = cardList.getSelectedValue();
+            gameController.getCurrentPlayer().setSelectedCard(selectedCard);
+            logArea.append("Choose Card：" + (selectedCard != null ? selectedCard.getName() : "null") + "\n");
+        });
+
+        JScrollPane scrollPane = new JScrollPane(cardList);
+        scrollPane.setMaximumSize(new Dimension(130, 200));
+        cardsPanel.add(scrollPane);
+
+        // 合并整体
         panel.add(Box.createVerticalStrut(10));
         panel.add(playersPanel);
         panel.add(Box.createVerticalStrut(10));
         panel.add(cardsPanel);
+
+        // 👇 卡牌刷新注册（你需要在 updateGameBoard 中调用）
+        this.cardListModel = cardListModel;
 
         return panel;
     }
@@ -317,6 +342,31 @@ public class GameFrame extends JFrame {
         treasureButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         treasureButton.setMaximumSize(new Dimension(150, 30));
 
+        //使用特殊效果卡片
+        JButton useCardButton = new JButton("Use Card");
+        useCardButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        useCardButton.setMaximumSize(new Dimension(150, 30));
+        useCardButton.addActionListener(e -> {
+            Player player = gameController.getCurrentPlayer();
+            Tile tile = gameController.getSelectedTile();
+
+            // 由玩家未来从手牌组件中设置
+            Card selectedCard = player.getSelectedCard();
+
+            if (selectedCard == null) {
+                logArea.append("No card selected. Cannot use.\n");
+                return;
+            }
+
+            boolean success = gameController.useCard(selectedCard, tile, Arrays.asList(player));
+            if (success) {
+                logArea.append("Card used successfully:" + selectedCard.getName() + "\n");
+                updateGameBoard();
+            } else {
+                logArea.append("Card use failed.\n");
+            }
+        });
+
         JButton endTurnButton = new JButton("End Turn");
         endTurnButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         endTurnButton.setMaximumSize(new Dimension(150, 30));
@@ -343,6 +393,9 @@ public class GameFrame extends JFrame {
         buttonsPanel.add(treasureButton);
         buttonsPanel.add(Box.createVerticalStrut(5));
         buttonsPanel.add(endTurnButton);
+        buttonsPanel.add(useCardButton);
+        buttonsPanel.add(Box.createVerticalStrut(5));
+
 
         // 添加当前玩家信息面板
         JPanel currentPlayerPanel = new JPanel();
@@ -560,6 +613,17 @@ public class GameFrame extends JFrame {
         // 刷新UI
         revalidate();
         repaint();
+        updateCardList();
+
+    }
+
+    private void updateCardList() {
+        if (cardListModel == null) return;
+        cardListModel.clear();
+        java.util.List<Card> hand = gameController.getCurrentPlayer().getHand();
+        for (Card card : hand) {
+            cardListModel.addElement(card);
+        }
     }
 
     // 创建玩家图标
@@ -567,4 +631,9 @@ public class GameFrame extends JFrame {
         // 这里应该返回根据角色颜色加载的图标
         return null;
     }
+    // 更新水位条（目前为占位实现）
+    private void updateWaterLevel() {
+        // TODO: 可在此更新右侧水位进度条
     }
+
+}
