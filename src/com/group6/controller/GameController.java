@@ -1,5 +1,7 @@
 package com.group6.controller;
 
+import java.util.Collections;
+import java.util.HashMap;
 import com.group6.entity.common.*;
 import com.group6.entity.deck.FloodDeck;
 import com.group6.entity.deck.TreasureDeck;
@@ -8,6 +10,8 @@ import com.group6.entity.player.Player;
 import com.group6.factory.DeckFactory;
 import com.group6.factory.RoleFactory;
 import com.group6.utils.CardEffectUtils;
+import com.group6.GUI.GameFrame;
+
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -25,6 +29,7 @@ public class GameController {
     private WaterMeter waterMeter;
     private int turnCounter = 1; // 回合计数器
     private static GameController instance;
+    private HashMap<String, Boolean> capturedTreasures = new HashMap<>();
 
 
     public GameController() {
@@ -89,14 +94,15 @@ public class GameController {
             tiles.add(new Tile(tileNames[i], 0, 0));
         }
         gameBoard.setTiles(tiles);
+
+        List<Treasure> treasures = new ArrayList<>();
+        Treasure.initializeTreasures(treasures);
+        gameBoard.setTreasures(treasures);
         
         // 使用Tile类的方法随机初始化瓦片位置
         Tile tempTile = new Tile("临时瓦片", 0, 0);
         tempTile.initializeTiles(gameBoard.getTiles());
 
-        //初始化8个宝藏 和 4个宝藏的全局统计
-        List<Treasure> treasures = new ArrayList<>();
-        Treasure.initializeTreasures(treasures);//初始化8个宝藏
         HashMap<String,Boolean> capturedTreasures = new HashMap<>();
         capturedTreasures.put("The Earth Stone", false);
         capturedTreasures.put("The Crystal of Fire", false);
@@ -136,9 +142,15 @@ public class GameController {
         players.add(diver);
 
         gameBoard.setPlayers(players);
+        // 初始化每位玩家的初始牌（不包含“水位上升”）
+        for (Player player : players) {
+            List<Card> initialCards = treasureDeck.getNoRiseCards(2);
+            for (Card card : initialCards) {
+                player.getHand().add(card);
+                card.setOwner(player);
+            }
+        }
 
-        // 初始化宝藏
-        initializeTreasures();
 
         // 设置当前玩家为工程师
         currentPlayer = engineer;
@@ -158,11 +170,7 @@ public class GameController {
         
         // 3. 切换到下一个玩家
         switchToNextPlayer();
-        
-        // 4. 更新UI
-        if (gameFrame != null) {
-            gameFrame.updateGameBoard();
-        }
+
     }
 
     // 根据坐标查找瓷砖
@@ -211,6 +219,7 @@ public class GameController {
         return selectedTile;
     }
 
+    //记录玩家是否获取了宝藏
     public HashMap<String,Boolean> getCapturedTreasures(){
         return capturedTreasures;
     }
@@ -220,6 +229,30 @@ public class GameController {
         floodDeck.putBack2Top();
         checkGameOver();
     }
+
+    private void drawTreasureCards() {
+        List<Card> drawn = treasureDeck.getCards(2); // 抽两张牌
+        for (Card card : drawn) {
+            if (card.getName().equals("Waters Rise")) {
+                handleWaterRise();           // 提升水位并洗回洪水牌
+                treasureDeck.discard(card);  // 弃掉水位上升牌
+            } else {
+                currentPlayer.getHand().add(card); // 加入当前玩家手牌
+                card.setOwner(currentPlayer);      // 设置拥有者
+            }
+        }
+    }
+
+
+    private void switchToNextPlayer() {
+        List<Player> players = gameBoard.getPlayers();
+        int index = players.indexOf(currentPlayer);
+        int nextIndex = (index + 1) % players.size();
+        currentPlayer = players.get(nextIndex);
+        currentPlayer.startTurn();
+    }
+
+
 
     private void drawFloodCards() {
         int cardsToDrawCount = waterMeter.getFloodCardsCount();
@@ -250,6 +283,48 @@ public class GameController {
         return false;
     }
 
+
+    private List<Tile> getRandomPlayerStartPositions(int count) {
+        List<Tile> allTiles = new ArrayList<>(gameBoard.getTiles());
+        Collections.shuffle(allTiles);
+        return allTiles.subList(0, count);
+    }
+
+    // 使用特殊卡牌
+    // 不占用行动次数
+    public boolean useCard(Card card, Tile targetTile, List<Player> targets) {
+        boolean success = false;
+        // 判断卡牌名称并调用对应效果
+        switch (card.getName()) {
+            case "Sandbag":
+                success = CardEffectUtils.useSandbag(targetTile);
+                break;
+
+            case "Helicopter":
+                success = CardEffectUtils.useHelicopter(targets, targetTile);
+                break;
+
+            case "Waters Rise":
+                // 特殊处理：立即触发水位上升逻辑，不进入手牌
+                CardEffectUtils.useWatersRise(floodDeck);
+                // 提升水位、重洗洪水弃牌堆
+                handleWaterRise();
+                treasureDeck.discard(card);
+                return true;
+
+            default:
+                return false;
+        }
+
+        // 如果使用成功，移除卡牌并弃牌
+        if (success) {
+            currentPlayer.getHand().remove(card);
+            treasureDeck.discard(card);
+        }
+
+        return success;
+    }
+
     // 在GameController类中添加
     public void moveAllPlayers(Tile destination) {
         if (destination == null || destination.isSunk()) { // 假设Tile有isSunk()方法判断是否沉没
@@ -260,6 +335,7 @@ public class GameController {
         for (Player player : gameBoard.getPlayers()) {
             player.setCurrentPosition(destination);
         }
+
 
     }
 

@@ -5,6 +5,7 @@ import com.group6.entity.common.Card;
 import com.group6.entity.common.CardType;
 import com.group6.entity.common.RoleType;
 import com.group6.entity.common.Tile;
+import com.group6.entity.common.Treasure;
 import com.group6.entity.gameBoard.GameBoard;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -64,11 +65,12 @@ public abstract class Player {
         }
         this.currentPosition = destination;
         this.actions--;
-        if(destination.isTreasure()){
+        if(destination.getTreasure() != null){
             this.isStandingOnTreasure = true;
         }
         return true;
     }
+
 
     // 添加卡牌到手牌（含上限检查）
     public boolean addCard(Card card) {
@@ -98,16 +100,27 @@ public abstract class Player {
         }
         return false;
     }
-    public boolean takeTreasure(){//如果站在宝藏上，则可以带走宝藏  ，后面还要加进去：如果手牌数可以，并且玩家选择带走宝藏，则可以带走宝藏
-        if(this.isStandingOnTreasure && countCardNumbers(this.currentPosition.getTreasure().getName(),this.hand)>=4){
-            this.currentPosition.setTreasure(null); //表示tile没有宝物，用于更新地图
+    public boolean takeTreasure() {
+        if (this.actions <= 0) return false;
+
+        if (this.isStandingOnTreasure && countCardNumbers(this.currentPosition.getTreasure().getName(), this.hand) >= 4) {
+            // 提前保存宝藏对象,避免空指针
+            Treasure treasure = this.currentPosition.getTreasure();
+
             String treasureName = this.currentPosition.getTreasure().getName();
-            this.currentPosition.getTreasure().setCaptured(true);//表示这个宝物已经拿到，用于更新地图
-            GameController.getCapturedTreasures().put(treasureName, true);//在controller里面表示这中宝物已经拿到
+
+            // tile上移除宝藏
+            this.currentPosition.setTreasure(null);
+            // 设置该宝藏已被获得
+            treasure.setCaptured(true);
+            this.currentPosition.getTreasure().setCaptured(true); // 设置已被获取
+            gameController.getCapturedTreasures().put(treasureName, true);
+            this.actions--; // 消耗行动
             return true;
         }
         return false;
     }
+
 
     protected boolean canMoveTo(Tile destination) {
         if(destination.isFlooded()){
@@ -142,12 +155,14 @@ public abstract class Player {
     }
 
     public boolean passCardTo(Player other,Card card){
+        if (this.actions <= 0) return false;
         if(other.hand.size()==5&&card==null){
             return false;
         }
         this.hand.remove(card);
         other.hand.add(card);
         card.setOwner(other);
+        this.actions--;
         return true;
     }
 
