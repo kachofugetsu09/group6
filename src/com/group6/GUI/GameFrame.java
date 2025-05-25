@@ -320,6 +320,18 @@ public class GameFrame extends JFrame {
         JButton endTurnButton = new JButton("End Turn");
         endTurnButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         endTurnButton.setMaximumSize(new Dimension(150, 30));
+        // 给“End Turn”按钮添加点击事件
+        endTurnButton.addActionListener(event -> {
+            // 1. 处理游戏回合切换逻辑
+            gameController.endTurn();
+
+            // 2. 刷新界面（格子、玩家位置等）
+            updateGameBoard();
+
+            // 3. 在右侧日志中添加提示信息
+            logArea.append("回合结束，切换玩家。\n");
+        });
+
 
         // 添加按钮到面板
         buttonsPanel.add(moveButton);

@@ -1,5 +1,7 @@
 package com.group6.controller;
 
+import java.util.Collections;
+import java.util.HashMap;
 import com.group6.entity.common.*;
 import com.group6.entity.deck.FloodDeck;
 import com.group6.entity.deck.TreasureDeck;
@@ -8,6 +10,8 @@ import com.group6.entity.player.Player;
 import com.group6.factory.DeckFactory;
 import com.group6.factory.RoleFactory;
 import com.group6.utils.CardEffectUtils;
+import com.group6.GUI.GameFrame;
+
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -24,6 +28,7 @@ public class GameController {
     private WaterMeter waterMeter;
 
     private static GameController instance;
+    private HashMap<String, Boolean> capturedTreasures = new HashMap<>();
 
 
     public GameController() {
@@ -136,9 +141,6 @@ public class GameController {
 
         gameBoard.setPlayers(players);
 
-        // 初始化宝藏
-        initializeTreasures();
-
         // 设置当前玩家为工程师
         currentPlayer = engineer;
         currentPlayer.startTurn();
@@ -157,11 +159,7 @@ public class GameController {
         
         // 3. 切换到下一个玩家
         switchToNextPlayer();
-        
-        // 4. 更新UI
-        if (gameFrame != null) {
-            gameFrame.updateGameBoard();
-        }
+
     }
 
     // 根据坐标查找瓷砖
@@ -210,6 +208,7 @@ public class GameController {
         return selectedTile;
     }
 
+    //记录玩家是否获取了宝藏
     public HashMap<String,Boolean> getCapturedTreasures(){
         return capturedTreasures;
     }
@@ -219,6 +218,15 @@ public class GameController {
         floodDeck.putBack2Top();
         checkGameOver();
     }
+
+    private void drawTreasureCards() {
+        // TODO: 实现宝藏牌抽卡逻辑
+    }
+
+    private void switchToNextPlayer() {
+        // TODO: 切换到下一名玩家
+    }
+
 
     private void drawFloodCards() {
         int cardsToDrawCount = waterMeter.getFloodCardsCount();
@@ -239,6 +247,12 @@ public class GameController {
             return true;
         }
         return false;
+    }
+
+    private List<Tile> getRandomPlayerStartPositions(int count) {
+        List<Tile> allTiles = new ArrayList<>(gameBoard.getTiles());
+        Collections.shuffle(allTiles);
+        return allTiles.subList(0, count);
     }
 
 
