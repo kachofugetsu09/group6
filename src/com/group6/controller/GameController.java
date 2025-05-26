@@ -39,6 +39,7 @@ public class GameController {
         if (instance == null) {
             instance = new GameController();
         }
+        哈哈哈哈
 
     }
 
