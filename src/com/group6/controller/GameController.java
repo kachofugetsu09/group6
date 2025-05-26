@@ -15,6 +15,8 @@ import com.group6.GUI.GameFrame;
 
 import javax.swing.*;
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameController {
     private GameBoard gameBoard;
@@ -25,7 +27,7 @@ public class GameController {
     private TreasureDeck treasureDeck;
     private FloodDeck floodDeck;
     private WaterMeter waterMeter;
-
+    private int turnCounter = 1; // 回合计数器
     private static GameController instance;
     private HashMap<String, Boolean> capturedTreasures = new HashMap<>();
 
@@ -274,8 +276,17 @@ public class GameController {
         if (waterMeter.isOverflow()) {
             return true;
         }
+
+
+        if (currentPlayer != null && !currentPlayer.hasMovablePosition()) {
+            return true;
+
+
+        }
+
         return false;
     }
+
 
     private List<Tile> getRandomPlayerStartPositions(int count) {
         List<Tile> allTiles = new ArrayList<>(gameBoard.getTiles());
@@ -316,40 +327,6 @@ public class GameController {
         }
 
         return success;
-    }
-
-    public boolean checkWin() {
-        //检查所有宝藏是否已被获得
-        for (Boolean captured : capturedTreasures.values()) {
-            if (!captured) return false;
-        }
-
-        // 检查所有玩家是否都在起飞点
-        Tile landing = null;
-        for (Tile tile : gameBoard.getTiles()) {
-            if (tile.getIsFoolsLanding()) {
-                landing = tile;
-                break;
-            }
-        }
-        if (landing == null) return false;
-
-        for (Player player : gameBoard.getPlayers()) {
-            if (!landing.equals(player.getCurrentPosition())) {
-                return false;
-            }
-        }
-
-        // 条件3：至少一名玩家拥有直升机卡
-        for (Player player : gameBoard.getPlayers()) {
-            for (Card card : player.getHand()) {
-                if ("Helicopter".equals(card.getType().name())) {
-                    return true;
-                }
-            }
-        }
-        // 所有宝藏和位置满足，但没有直升机卡
-        return false;
     }
 
 }
