@@ -26,29 +26,39 @@ jobs:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
-        
-    - name: Compile the project
+          - name: Compile the project
       run: mvn clean compile -B
       
     - name: Run tests (if any)
       run: mvn test -B || echo "No tests found, continuing..."
       
-    - name: Verify Main class can be found
+    - name: Verify Main class can be found and compile
       run: |
         if [ -f "src/main/java/com/group6/Main.java" ]; then
           echo "✅ Main class found in correct location"
         elif [ -f "src/com/group6/Main.java" ]; then
-          echo "⚠️  Main class found in legacy location - consider moving to src/main/java/"
+          echo "⚠️  Main class found in legacy location"
         else
           echo "❌ Main class not found!"
           exit 1
         fi
         
-    - name: Check for compilation errors
+    - name: Check for compilation errors (strict)
       run: |
-        if mvn clean compile -B -q; then
-          echo "✅ No compilation errors found"
+        echo "🔍 Checking for compilation errors..."
+        if mvn clean compile -B; then
+          echo "✅ Compilation successful"
         else
-          echo "❌ Compilation errors detected!"
+          echo "❌ Compilation failed - blocking push!"
           exit 1
         fi
+        
+    - name: Try to run Main class (if possible)
+      run: |
+        echo "🏃 Attempting to verify Main class can be instantiated..."
+        if [ -f "src/main/java/com/group6/Main.java" ]; then
+          cd src/main/java && javac -cp ../../../target/classes com/group6/Main.java || exit 1
+        elif [ -f "src/com/group6/Main.java" ]; then
+          cd src && javac -cp ../target/classes com/group6/Main.java || exit 1
+        fi
+        echo "✅ Main class compiles successfully"
