@@ -14,7 +14,6 @@ import com.group6.GUI.GameFrame;
 
 
 import javax.swing.*;
-import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +22,7 @@ public class GameController {
     private Player currentPlayer;
     private Tile selectedTile;
     private Difficulty difficulty;
-  //牌堆部分
+    //牌堆部分
     private TreasureDeck treasureDeck;
     private FloodDeck floodDeck;
     private WaterMeter waterMeter;
@@ -76,7 +75,7 @@ public class GameController {
         List<Tile> tiles = new ArrayList<>();
         // 预定义的瓦片名称，可以根据游戏规则自定义
         String[] tileNames = {
-            "Temple of the Moon", "Temple of the Sun",
+                "Temple of the Moon", "Temple of the Sun",
                 "Coral Palace", "Tidal Palace",
                 "Cave of Embers", "Cave of Shadows",
                 "Whispering Garden", "Howling Garden",
@@ -98,7 +97,7 @@ public class GameController {
         List<Treasure> treasures = new ArrayList<>();
         Treasure.initializeTreasures(treasures);
         gameBoard.setTreasures(treasures);
-        
+
         // 使用Tile类的方法随机初始化瓦片位置
         Tile tempTile = new Tile("临时瓦片", 0, 0);
         tempTile.initializeTiles(gameBoard.getTiles());
@@ -112,7 +111,7 @@ public class GameController {
 
         // 创建四个角色
         List<Player> players = new ArrayList<>();
-        
+
         // 获取一些不同的瓦片用于放置玩家，确保玩家不会重叠
         List<Tile> playerStartTiles = getRandomPlayerStartPositions(4);
 
@@ -165,10 +164,10 @@ public class GameController {
     public void endTurn() {
         // 1. 抽取宝藏卡
         drawTreasureCards();
-        
+
         // 2. 抽取洪水卡
         drawFloodCards();
-        
+
         // 3. 切换到下一个玩家
         switchToNextPlayer();
 
@@ -329,4 +328,81 @@ public class GameController {
         return success;
     }
 
+    /**
+     * 检查是否获胜
+     * 胜利条件：
+     * 1. 收集所有四个宝藏
+     * 2. 所有玩家都在"Fools' Landing"瓦片上
+     * 3. 使用直升机卡逃离
+     *
+     * @return true 如果满足胜利条件，false 否则
+     */
+    private boolean checkWin() {
+        // 1. 检查是否收集了所有宝藏
+        if (!areAllTreasuresCaptured()) {
+            return false;
+        }
+
+        // 2. 检查所有玩家是否都在"Fools' Landing"
+        if (!areAllPlayersAtFoolsLanding()) {
+            return false;
+        }
+
+        // 3. 检查当前玩家是否有直升机卡（实际游戏中需要使用直升机卡才能逃离）
+        // todo
+        return true;
+    }
+
+    /**
+     * 检查是否收集了所有宝藏
+     *
+     * @return true 如果所有宝藏都被收集，false 否则
+     */
+    private boolean areAllTreasuresCaptured() {
+        for (Boolean captured : capturedTreasures.values()) {
+            if (!captured) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 检查所有玩家是否都在"Fools' Landing"瓦片上
+     *
+     * @return true 如果所有玩家都在"Fools' Landing"，false 否则
+     */
+    private boolean areAllPlayersAtFoolsLanding() {
+        final String FOOLS_LANDING = "Fools' Landing";
+        Tile foolsLanding = findTileByName(FOOLS_LANDING);
+
+        if (foolsLanding == null) {
+            // 如果找不到"Fools' Landing"瓦片，返回false
+            return false;
+        }
+
+        List<Player> players = gameBoard.getPlayers();
+        for (Player player : players) {
+            if (!player.getCurrentPosition().equals(foolsLanding)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void moveAllPlayers(Tile destination) {
+        for(Player player : gameBoard.getPlayers()) {
+            if (player.move(destination)) {
+                // 如果移动成功，检查是否站在宝藏上
+                if (destination.getTreasure() != null) {
+                    player.setStandingOnTreasure(true);
+                    capturedTreasures.put(destination.getTreasure().getName(), true);
+                }
+            } else {
+                // 如果移动失败，可以选择抛出异常或记录日志
+                System.out.println("玩家 " + player.getColor() + " 无法移动到 " + destination.getName());
+            }
+        }
+    }
 }
