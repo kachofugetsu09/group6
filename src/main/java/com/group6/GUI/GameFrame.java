@@ -20,6 +20,8 @@ public class GameFrame extends JFrame {
     // 游戏日志区域
     private JTextArea logArea;
 
+    public int test;
+
     public GameFrame() {
         // 初始化游戏控制器
         gameController = new GameController();
