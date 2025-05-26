@@ -1,14 +1,14 @@
 package com.group6;
 
-import com.group6.GUI.GameFrame;
-
-import javax.swing.SwingUtilities;
+import com.group6.controller.GameController;
 
 public class Main {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            GameFrame gameFrame = new GameFrame();
-            gameFrame.setVisible(true);
-        });
+
+        
+        // 创建游戏控制器并初始化游戏
+        GameController gameController = new GameController();
+        
+        System.out.println("✅ 游戏初始化完成！");
     }
 }
