@@ -6,7 +6,9 @@ import java.util.Collections;
 import java.util.List;
 
 import com.group6.entity.common.Card;
+import lombok.Getter;
 
+@Getter
 public abstract class Deck {
     //当前牌堆
     protected List<Card> deck;

@@ -1,14 +1,17 @@
 package com.group6.entity.common;
 
 import com.group6.controller.GameController;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 public class Tile {

@@ -1,5 +1,7 @@
 package com.group6.controller;
 
+import java.awt.*;
+import java.io.File;
 import java.util.*;
 
 import com.group6.entity.common.*;
@@ -29,7 +31,6 @@ public class GameController {
     private int turnCounter = 1; // 回合计数器
     private static GameController instance;
     private HashMap<String, Boolean> capturedTreasures = new HashMap<>();
-
 
     public GameController() {
         initializeGame();
@@ -158,6 +159,65 @@ public class GameController {
 
     }
 
+    // 从GameState恢复游戏状态
+    public void initializeFromSave(GameState state) {
+        // 恢复水位计
+        this.difficulty = Difficulty.MEDIUM;
+        this.waterMeter = new WaterMeter(this.difficulty);
+        this.waterMeter.setLevel(state.getWaterLevel());
+
+        // 恢复宝藏获取状态
+        this.capturedTreasures = state.getCapturedTreasures();
+
+        // 恢复地图瓦片、宝藏、玩家
+        this.gameBoard = new GameBoard();
+        this.gameBoard.setTiles(state.getTiles());
+        this.gameBoard.setTreasures(state.getTreasures());
+        this.gameBoard.setPlayers(state.getPlayers());
+
+        // 恢复牌堆
+        this.treasureDeck = new TreasureDeck(state.getTreasureDeck(), state.getTreasureDiscard());
+        this.floodDeck = new FloodDeck(state.getFloodDeck(), state.getFloodDiscard());
+
+        // 恢复当前玩家引用
+        List<Player> players = state.getPlayers();
+        int index = state.getCurrentPlayerIndex();
+        this.currentPlayer = players.get(index);
+        this.currentPlayer.startTurn();
+
+        // 恢复每张卡牌的持有者
+        for (Player player : players) {
+            for (Card card : player.getHand()) {
+                card.setOwner(player);
+            }
+        }
+
+        //恢复每位玩家的位置（从 GameState.playerPositions 中）
+        List<Point> positions = state.getPlayerPositions();
+        for (int i = 0; i < players.size(); i++) {
+            Point pos = positions.get(i);
+            Tile matched = findTileByPosition(pos);
+            if (matched != null) {
+                players.get(i).setCurrentPosition(matched);
+            } else {
+                System.err.println("⚠️ 玩家 " + players.get(i).getColor() + " 坐标位置无匹配 Tile：" + pos);
+            }
+        }
+
+        //恢复 gameController 引用
+        for (Player player : players) {
+            player.setGameController(this);
+        }
+
+        this.selectedTile = null;
+        if (gameFrame != null) {
+            gameFrame.repaint();
+        }
+
+        System.out.println("✅ Save loaded and game state restored.");
+    }
+
+
     // 在类的成员变量部分添加UI更新引用
     private GameFrame gameFrame;
 
@@ -208,8 +268,21 @@ public class GameController {
                 return tile;
             }
         }
-        return null; // 如果找不到，可以返回 null 或抛异常，根据你的容错策略
+        return null;
     }
+
+    // 根据位置坐标从游戏地图中找到真实 Tile 实例
+    //用于恢复玩家 currentPosition 引用
+    private Tile findTileByPosition(Point point) {
+        for (Tile tile : gameBoard.getTiles()) {
+            if (tile.getPosition().x == point.x && tile.getPosition().y == point.y) {
+                return tile;
+            }
+        }
+        return null;
+    }
+
+
 
     public GameBoard getGameBoard() {
         return gameBoard;
@@ -350,8 +423,11 @@ public class GameController {
         }
 
         // 3. 检查当前玩家是否有直升机卡（实际游戏中需要使用直升机卡才能逃离）
-        // todo
-        return true;
+        Player current = getCurrentPlayer();
+        boolean hasHelicopter = current.getHand().stream()
+                .anyMatch(card -> card.getType() == CardType.HELICOPTER);
+
+        return hasHelicopter;
     }
 
     /**
@@ -406,4 +482,59 @@ public class GameController {
             }
         }
     }
+
+    /**
+     *为避免 Card ↔ Player 的循环引用，需清空 Card 的 owner 字段
+     */
+    public GameState getCurrentGameState() {
+        // 🔁 防止卡牌与玩家之间的循环引用
+        for (Player p : gameBoard.getPlayers()) {
+            for (Card c : p.getHand()) {
+                c.setOwner(null);  // 移除 Card 对 Player 的引用，避免序列化失败
+            }
+        }
+
+        GameState state = new GameState();
+
+        // 当前玩家索引（用于恢复回合）
+        state.setCurrentPlayerIndex(gameBoard.getPlayers().indexOf(currentPlayer));
+
+        // 保存游戏数据
+        state.setPlayers(gameBoard.getPlayers());
+        state.setTiles(gameBoard.getTiles());
+        state.setTreasures(gameBoard.getTreasures());
+
+        // 保存牌堆状态
+        state.setTreasureDeck(treasureDeck.getDeck());
+        state.setTreasureDiscard(treasureDeck.getDiscardPile());
+        state.setFloodDeck(floodDeck.getDeck());
+        state.setFloodDiscard(floodDeck.getDiscardPile());
+
+        // 保存水位等级与已获取宝藏
+        state.setWaterLevel(waterMeter.getLevel());
+        state.setCapturedTreasures(capturedTreasures);
+
+        List<Point> positions = new ArrayList<>();
+        for (Player p : gameBoard.getPlayers()) {
+            positions.add(p.getCurrentPosition().getPosition()); // 存真实坐标
+        }
+        state.setPlayerPositions(positions);
+
+
+        return state;
+    }
+
+    public void saveGameToFile(File file) {
+        GameState state = getCurrentGameState();
+        com.group6.utils.GameSaveUtils.saveGame(state, file);
+    }
+
+    public boolean loadGameFromFile(File file) {
+        GameState state = com.group6.utils.GameSaveUtils.loadGame(file);
+        if (state == null) return false;
+        initializeFromSave(state);
+        return true;
+    }
+
+
 }

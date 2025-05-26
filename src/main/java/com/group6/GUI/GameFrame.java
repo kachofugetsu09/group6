@@ -4,12 +4,15 @@ import com.group6.controller.GameController;
 import com.group6.entity.common.Card;
 import com.group6.entity.common.Tile;
 import com.group6.entity.player.Player;
+import com.group6.entity.common.GameState;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import java.io.File;
+
 
 public class GameFrame extends JFrame {
     private GameController gameController;
@@ -520,12 +523,43 @@ public class GameFrame extends JFrame {
         JButton loadButton = new JButton("Load Game");
         JButton quitButton = new JButton("Quit Game");
 
+        // 保存游戏按钮逻辑
+        saveButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                gameController.saveGameToFile(file);
+                JOptionPane.showMessageDialog(null, "✅ Game saved to: " + file.getAbsolutePath());
+            }
+        });
+
+        // 读取游戏按钮逻辑
+        loadButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                boolean success = gameController.loadGameFromFile(file);
+                if (success) {
+                    updateGameBoard();    // 刷新地图
+                    updateCardList();     // 刷新卡牌
+                    logArea.append("✅ Game loaded from: " + file.getName() + "\n");
+                } else {
+                    JOptionPane.showMessageDialog(null, "⚠️ Load failed. Please check the save file.");
+                }
+            }
+        });
+
+        // 退出按钮逻辑
+        quitButton.addActionListener(e -> System.exit(0));
+
         panel.add(saveButton);
         panel.add(loadButton);
         panel.add(quitButton);
 
         return panel;
     }
+
+
 
     // 更新游戏界面
     private void updateGameBoard() {

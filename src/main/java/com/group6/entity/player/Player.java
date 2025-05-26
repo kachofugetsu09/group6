@@ -1,30 +1,56 @@
 package com.group6.entity.player;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.*;
+
 import com.group6.controller.GameController;
-import com.group6.entity.common.Card;
-import com.group6.entity.common.CardType;
-import com.group6.entity.common.RoleType;
-import com.group6.entity.common.Tile;
-import com.group6.entity.common.Treasure;
+import com.group6.entity.common.*;
 import com.group6.entity.gameBoard.GameBoard;
+import com.group6.entity.player.role.*;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = Engineer.class, name = "ENGINEER"),
+        @JsonSubTypes.Type(value = Pilot.class, name = "PILOT"),
+        @JsonSubTypes.Type(value = Explorer.class, name = "EXPLORER"),
+        @JsonSubTypes.Type(value = Diver.class, name = "DIVER"),
+        @JsonSubTypes.Type(value = Messenger.class, name = "MESSENGER"),
+        @JsonSubTypes.Type(value = Navigator.class, name = "NAVIGATOR")
+})
+@JsonAutoDetect(
+        getterVisibility = NONE,
+        isGetterVisibility = NONE,
+        fieldVisibility = ANY
+)
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
 @Getter
 public abstract class Player {
+
     //当前玩家职业234
     private RoleType roletype;
     //当前玩家颜色
     private String  color;
     //当前玩家位置
+    @JsonIgnore
     private Tile currentPosition;
     //手牌
+    @JsonIgnore
     private ArrayList<Card>  hand = new ArrayList<>();
     // 手牌上限
     private static final int MAX_HAND_SIZE = 5;
@@ -34,6 +60,7 @@ public abstract class Player {
     private Card selectedCard =null;
     private boolean isStandingOnTreasure = false;   //是否站在宝藏上
 
+    @JsonIgnore
     GameController gameController;
 
 
