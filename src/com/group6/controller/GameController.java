@@ -28,7 +28,7 @@ public class GameController {
     private WaterMeter waterMeter;
     private int turnCounter = 1; // 回合计数器
     private static GameController instance;
-
+    private HashMap<String, Boolean> capturedTreasures = new HashMap<>();
 
 
     public GameController() {
