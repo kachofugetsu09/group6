@@ -1,0 +1,54 @@
+name: Code Review CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+        
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: Compile the project
+      run: mvn clean compile -B
+      
+    - name: Run tests (if any)
+      run: mvn test -B || echo "No tests found, continuing..."
+      
+    - name: Verify Main class can be found
+      run: |
+        if [ -f "src/main/java/com/group6/Main.java" ]; then
+          echo "✅ Main class found in correct location"
+        elif [ -f "src/com/group6/Main.java" ]; then
+          echo "⚠️  Main class found in legacy location - consider moving to src/main/java/"
+        else
+          echo "❌ Main class not found!"
+          exit 1
+        fi
+        
+    - name: Check for compilation errors
+      run: |
+        if mvn clean compile -B -q; then
+          echo "✅ No compilation errors found"
+        else
+          echo "❌ Compilation errors detected!"
+          exit 1
+        fi

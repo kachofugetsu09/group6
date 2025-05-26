@@ -39,7 +39,7 @@ public class GameController {
         if (instance == null) {
             instance = new GameController();
         }
-        return instance;
+
     }
 
 
