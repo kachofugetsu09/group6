@@ -1,7 +1,7 @@
 package com.group6.controller;
 
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
+
 import com.group6.entity.common.*;
 import com.group6.entity.deck.FloodDeck;
 import com.group6.entity.deck.TreasureDeck;
@@ -13,9 +13,8 @@ import com.group6.utils.CardEffectUtils;
 import com.group6.GUI.GameFrame;
 
 
+import javax.swing.*;
 import java.awt.Point;
-import java.util.ArrayList;
-import java.util.List;
 
 public class GameController {
     private GameBoard gameBoard;
@@ -114,31 +113,32 @@ public class GameController {
         
         // 获取一些不同的瓦片用于放置玩家，确保玩家不会重叠
         List<Tile> playerStartTiles = getRandomPlayerStartPositions(4);
-        
-        // 创建玩家并放置在初始位置
-        // 工程师
-        Player engineer = RoleFactory.createRole(RoleType.ENGINEER);
-        engineer.setColor("RED");
-        engineer.setCurrentPosition(playerStartTiles.get(0));
-        players.add(engineer);
 
-        // 飞行员
-        Player pilot = RoleFactory.createRole(RoleType.PILOT);
-        pilot.setColor("BLUE");
-        pilot.setCurrentPosition(playerStartTiles.get(1));
-        players.add(pilot);
+        // 所有可用角色类型
+        List<RoleType> allRoles = Arrays.asList(
+                RoleType.ENGINEER,
+                RoleType.PILOT,
+                RoleType.EXPLORER,
+                RoleType.DIVER,
+                RoleType.MESSENGER,
+                RoleType.NAVIGATOR
+        );
 
-        // 探险家
-        Player explorer = RoleFactory.createRole(RoleType.EXPLORER);
-        explorer.setColor("GREEN");
-        explorer.setCurrentPosition(playerStartTiles.get(2));
-        players.add(explorer);
+        // 随机打乱并选择前4个角色
+        Collections.shuffle(allRoles);
+        List<RoleType> selectedRoles = allRoles.subList(0, 4);
 
-        // 潜水员
-        Player diver = RoleFactory.createRole(RoleType.DIVER);
-        diver.setColor("BLACK");
-        diver.setCurrentPosition(playerStartTiles.get(3));
-        players.add(diver);
+        // 对应颜色（固定顺序分配）
+        List<String> colors = Arrays.asList("RED", "BLUE", "GREEN", "BLACK");
+
+        for (int i = 0; i < 4; i++) {
+            Player player = RoleFactory.createRole(selectedRoles.get(i));
+            player.setColor(colors.get(i));
+            player.setCurrentPosition(playerStartTiles.get(i));
+            players.add(player);
+        }
+        gameBoard.setPlayers(players);
+
 
         gameBoard.setPlayers(players);
         // 初始化每位玩家的初始牌（不包含“水位上升”）
@@ -151,9 +151,9 @@ public class GameController {
         }
 
 
-        // 设置当前玩家为工程师
-        currentPlayer = engineer;
+        currentPlayer = players.get(0);
         currentPlayer.startTurn();
+
     }
 
     // 在类的成员变量部分添加UI更新引用
@@ -170,6 +170,9 @@ public class GameController {
         // 3. 切换到下一个玩家
         switchToNextPlayer();
 
+        if (checkWin()) {
+            JOptionPane.showMessageDialog(null, "🎉 游戏胜利！你们逃离了禁岛！");
+        }
     }
 
     // 根据坐标查找瓷砖
@@ -313,6 +316,40 @@ public class GameController {
         }
 
         return success;
+    }
+
+    public boolean checkWin() {
+        //检查所有宝藏是否已被获得
+        for (Boolean captured : capturedTreasures.values()) {
+            if (!captured) return false;
+        }
+
+        // 检查所有玩家是否都在起飞点
+        Tile landing = null;
+        for (Tile tile : gameBoard.getTiles()) {
+            if (tile.getIsFoolsLanding()) {
+                landing = tile;
+                break;
+            }
+        }
+        if (landing == null) return false;
+
+        for (Player player : gameBoard.getPlayers()) {
+            if (!landing.equals(player.getCurrentPosition())) {
+                return false;
+            }
+        }
+
+        // 条件3：至少一名玩家拥有直升机卡
+        for (Player player : gameBoard.getPlayers()) {
+            for (Card card : player.getHand()) {
+                if ("Helicopter".equals(card.getType().name())) {
+                    return true;
+                }
+            }
+        }
+        // 所有宝藏和位置满足，但没有直升机卡
+        return false;
     }
 
 }
