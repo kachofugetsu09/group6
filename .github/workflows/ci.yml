@@ -1,10 +1,10 @@
 name: Code Review CI
 
+# 只在Pull Request时触发，保护主分支
 on:
-  push:
-    branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+    types: [opened, synchronize, reopened]
 
 jobs:
   build-and-test:
