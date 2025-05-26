@@ -39,7 +39,7 @@ public class GameController {
         if (instance == null) {
             instance = new GameController();
         }
-        哈哈哈哈
+        哈哈哈哈测试
 
     }
 
