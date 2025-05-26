@@ -4,7 +4,9 @@ import com.group6.entity.common.Card;
 import com.group6.factory.CardFactory;
 import com.group6.entity.common.CardType;
 
+
 import java.util.Collections;
+import java.util.List;
 
 public class FloodDeck extends Deck {
 
@@ -13,6 +15,14 @@ public class FloodDeck extends Deck {
         super();
         initialize();
     }
+
+    //读档的构造方法
+    public FloodDeck(List<Card> deck, List<Card> discard) {
+        super();
+        this.deck = deck;
+        this.discardPile = discard;
+    }
+
 
     // 初始化24张洪水牌
     @Override

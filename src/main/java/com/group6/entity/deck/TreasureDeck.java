@@ -16,6 +16,14 @@ public class TreasureDeck extends Deck {
         initialize(waterRiseCount);
     }
 
+    //读档的构造方法
+    public TreasureDeck(List<Card> deck, List<Card> discard) {
+        super();
+        this.deck = deck;
+        this.discardPile = discard;
+    }
+
+
     protected void initialize(int waterRiseCount) {
         for (int i = 0; i < 5; i++) {
             deck.add(CardFactory.createCard(CardType.TREASURE, "The Earth Stone"));
@@ -58,4 +66,5 @@ public class TreasureDeck extends Deck {
 
         return noRiseCards;
     }
+
 }
