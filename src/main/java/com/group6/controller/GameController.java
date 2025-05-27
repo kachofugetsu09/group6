@@ -349,7 +349,21 @@ public class GameController {
         if (waterMeter.isOverflow()) {
             return true;
         }
-
+        
+        //检查是否所有宝藏砖块都淹没   isflooded是淹没，sunk是沉没
+        List<Tile> tiles = gameBoard.getTiles();
+        int unSunkTreasureCount = 0;
+        for (Tile tile : tiles) {
+            if (tile.isHasTreasure() && ! tile.isSunk()) {
+                unSunkTreasureCount++;
+            }
+            if (tile.getName().equals("Fools' Landing") && tile.isSunk()) {
+                return true;
+            }
+        }   
+        if (unSunkTreasureCount == 0) {
+            return true;
+        }
 
         if (currentPlayer != null && !currentPlayer.hasMovablePosition()) {
             return true;

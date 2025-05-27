@@ -5,6 +5,7 @@ import com.group6.entity.common.Card;
 import com.group6.entity.common.Tile;
 import com.group6.entity.player.Player;
 import com.group6.entity.common.GameState;
+import java.util.ArrayList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,6 +25,8 @@ public class GameFrame extends JFrame {
     private JTextArea logArea;
 
     public int test;
+
+    private ArrayList<Point> validTilePositions = Tile.getValidTilePositions();
 
     public GameFrame() {
         // 初始化游戏控制器
@@ -212,64 +215,89 @@ public class GameFrame extends JFrame {
         return panel;
     }
 
-    // 创建游戏主面板（岛屿区域）
     private JPanel createGamePanel() {
         JPanel panel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                // 绘制背景颜色
-                g.setColor(new Color(40, 122, 120)); // 蓝绿色
+                g.setColor(new Color(40, 122, 120));
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
         };
 
-        // 调整游戏面板大小
-        panel.setPreferredSize(new Dimension(524, 600)); // 给岛屿区域更多空间
+        panel.setPreferredSize(new Dimension(524, 600));
 
-        // 创建岛屿格子（6x6网格）
-        panel.setLayout(new GridLayout(6, 6, 2, 2));
+        // 改用GridBagLayout，这样我们可以精确控制每个组件的位置
+        panel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
         // 初始化格子面板数组
         tilePanels = new JPanel[6][6];
 
-        // 添加36个岛屿格子
+        // 1. 先创建所有海洋格子
         for (int y = 0; y < 6; y++) {
             for (int x = 0; x < 6; x++) {
-                final int tileX = x + 1;  // 转换为1-6的坐标
-                final int tileY = y + 1;
+                gbc.gridx = x;
+                gbc.gridy = y;
+                gbc.fill = GridBagConstraints.BOTH;
+                gbc.weightx = 1.0;
+                gbc.weighty = 1.0;
 
-                JPanel tilePanel = new JPanel();
-                tilePanel.setLayout(new BorderLayout());
-                tilePanel.setBackground(new Color(200, 200, 160)); // 岛屿默认颜色
+                JPanel emptyPanel = new JPanel(new BorderLayout());
+                emptyPanel.setBackground(new Color(40,122,120));
 
-                // 为每个格子添加一个标签
+                JLabel coordLabel = new JLabel(x + "," + y);
+                coordLabel.setHorizontalAlignment(JLabel.CENTER);
+                coordLabel.setForeground(Color.WHITE);
+                emptyPanel.add(coordLabel, BorderLayout.SOUTH);
+
+                panel.add(emptyPanel, gbc);
+                tilePanels[y][x] = emptyPanel;
+            }
+        }
+
+        // 2. 替换岛屿瓦片
+        for (Tile tile : gameController.getGameBoard().getTiles()) {
+            Point pos = tile.getPosition();
+            final Tile finalTile = tile;
+
+            int tileX = pos.x;  // 转换为数组索引
+            int tileY = pos.y;
+
+            if (tileX >= 0 && tileX < 6 && tileY >= 0 && tileY < 6) {
+                gbc.gridx = tileX;
+                gbc.gridy = tileY;
+
+                JPanel tilePanel = new JPanel(new BorderLayout());
+                tilePanel.setBackground(new Color(200, 200, 160));
+
                 JLabel tileLabel = new JLabel();
                 tileLabel.setHorizontalAlignment(JLabel.CENTER);
                 tilePanel.add(tileLabel, BorderLayout.CENTER);
 
-                // 添加名称标签在底部
-                JLabel nameLabel = new JLabel(tileX + "," + tileY);
+                JLabel nameLabel = new JLabel(pos.x + "," + pos.y + " " + tile.getName());
                 nameLabel.setHorizontalAlignment(JLabel.CENTER);
-                nameLabel.setBackground(new Color(210, 180, 140)); // 浅棕色
+                nameLabel.setBackground(new Color(210, 180, 140));
                 nameLabel.setOpaque(true);
                 tilePanel.add(nameLabel, BorderLayout.SOUTH);
 
-                // 添加点击事件
+                
                 tilePanel.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
-                        Tile clickedTile = gameController.findTileAt(tileX, tileY);
-                        if (clickedTile != null) {
-                            gameController.selectTile(clickedTile);
-                            updateGameBoard();
-                            logArea.append("选择了格子: " + tileX + "," + tileY + "\n");
-                        }
+                        gameController.selectTile(finalTile);
+                        updateGameBoard();
+                        logArea.append("选择了瓦片: " + finalTile.getName() +
+                                "，在" + finalTile.getPosition().x + "," +
+                                finalTile.getPosition().y + "\n");
                     }
                 });
 
-                panel.add(tilePanel);
-                tilePanels[y][x] = tilePanel;  // 存储面板引用
+                // 移除原来的面板
+                panel.remove(tilePanels[tileY][tileX]);
+                // 添加新面板到指定位置
+                panel.add(tilePanel, gbc);
+                tilePanels[tileY][tileX] = tilePanel;
             }
         }
 
@@ -375,7 +403,7 @@ public class GameFrame extends JFrame {
         JButton endTurnButton = new JButton("End Turn");
         endTurnButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         endTurnButton.setMaximumSize(new Dimension(150, 30));
-        // 给“End Turn”按钮添加点击事件
+        // 给"End Turn"按钮添加点击事件
         endTurnButton.addActionListener(event -> {
             // 1. 处理游戏回合切换逻辑
             gameController.endTurn();
@@ -575,7 +603,7 @@ public class GameFrame extends JFrame {
                 tilePanel.add(tileLabel, BorderLayout.CENTER);
 
                 // 添加名称标签
-                JLabel nameLabel = new JLabel((x + 1) + "," + (y + 1));
+                JLabel nameLabel = new JLabel(x + "," + y);
                 nameLabel.setHorizontalAlignment(JLabel.CENTER);
                 nameLabel.setBackground(new Color(210, 180, 140));
                 nameLabel.setOpaque(true);
@@ -585,7 +613,7 @@ public class GameFrame extends JFrame {
                 tilePanel.setBackground(new Color(200, 200, 160));
 
                 // 检查是否有洪水
-                Tile tile = gameController.findTileAt(x + 1, y + 1);
+                Tile tile = gameController.findTileAt(x, y);
                 if (tile != null && tile.isFlooded()) {
                     tilePanel.setBackground(new Color(100, 180, 255)); // 淡蓝色表示被淹没
                 }
@@ -596,8 +624,8 @@ public class GameFrame extends JFrame {
         // 高亮选中的格子
         Tile selectedTile = gameController.getSelectedTile();
         if (selectedTile != null) {
-            int x = selectedTile.getPosition().x - 1;
-            int y = selectedTile.getPosition().y - 1;
+            int x = selectedTile.getPosition().x;
+            int y = selectedTile.getPosition().y;
             if (x >= 0 && x < 6 && y >= 0 && y < 6) {
                 tilePanels[y][x].setBackground(new Color(255, 255, 0)); // 黄色高亮
             }
@@ -609,8 +637,8 @@ public class GameFrame extends JFrame {
             if (player.getCurrentPosition() != null) {
                 Point pos = player.getCurrentPosition().getPosition();
                 if (pos != null) {
-                    int x = pos.x - 1;
-                    int y = pos.y - 1;
+                    int x = pos.x;
+                    int y = pos.y;
                     if (x >= 0 && x < 6 && y >= 0 && y < 6) {
                         JPanel tilePanel = tilePanels[y][x];
                         JLabel playerLabel = (JLabel) tilePanel.getComponent(0);

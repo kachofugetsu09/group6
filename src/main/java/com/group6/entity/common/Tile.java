@@ -31,17 +31,17 @@ public class Tile {
     // 静态初始化块，初始化 positions
     static {
         // 添加所有可能的位置
+        positions.add(new Point(0, 2)); positions.add(new Point(0, 3)); 
         positions.add(new Point(1, 1)); positions.add(new Point(1, 2)); 
         positions.add(new Point(1, 3)); positions.add(new Point(1, 4));
-        positions.add(new Point(2, 1)); positions.add(new Point(2, 2)); 
-        positions.add(new Point(2, 3)); positions.add(new Point(2, 4));
-        positions.add(new Point(3, 1)); positions.add(new Point(3, 2)); 
-        positions.add(new Point(3, 3)); positions.add(new Point(3, 4));
+        positions.add(new Point(2, 0)); positions.add(new Point(2, 1)); 
+        positions.add(new Point(2, 2)); positions.add(new Point(2, 3)); 
+        positions.add(new Point(2, 4)); positions.add(new Point(2, 5));
+        positions.add(new Point(3, 0)); positions.add(new Point(3, 1)); 
+        positions.add(new Point(3, 2)); positions.add(new Point(3, 3));
+        positions.add(new Point(3, 4)); positions.add(new Point(3, 5));
         positions.add(new Point(4, 1)); positions.add(new Point(4, 2)); 
-        positions.add(new Point(4, 3)); positions.add(new Point(4, 4));
-        positions.add(new Point(1, 0)); positions.add(new Point(2, 0)); 
-        positions.add(new Point(3, 5)); positions.add(new Point(4, 5));
-        positions.add(new Point(0, 2)); positions.add(new Point(0, 3)); 
+        positions.add(new Point(4, 3)); positions.add(new Point(4, 4)); 
         positions.add(new Point(5, 2)); positions.add(new Point(5, 3));
     }
 
@@ -59,10 +59,15 @@ public class Tile {
         return (dx == 1 && dy == 0) || (dx == 0 && dy == 1);
     }
 
+    public static ArrayList<Point> getValidTilePositions(){
+        return positions;
+    }
 
-    public void initializeTiles(List<Tile> tiles){
+
+    public static void initializeTiles(List<Tile> tiles){
         // 使用 Collections.shuffle 来打乱位置顺序
-        Collections.shuffle(positions);
+        ArrayList<Point> positionsCopy = new ArrayList<>(positions);
+        Collections.shuffle(positionsCopy);
         tiles.get(0).setFoolsLanding(true);//随便找一个，后面随机放位置
         
         // 为每个瓦片分配一个随机位置
@@ -82,16 +87,6 @@ public class Tile {
             this.sunk = false;
         }
     }
-
-    //上升操作已经在player 的 shoreup实现了
-    // public void tileRise(){//上升一个状态  sunk -> flood 或者 flood -> 没flood
-    //     if(this.sunk){
-    //         this.flooded = true;
-    //         this.sunk = false;
-    //     }else if(this.flooded){
-    //         this.flooded = false;
-    //     }
-    // }
 
     public void setTreasure(Treasure treasure){
         this.hasTreasure = true;
