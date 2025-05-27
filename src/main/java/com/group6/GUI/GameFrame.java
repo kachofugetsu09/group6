@@ -5,6 +5,10 @@ import com.group6.entity.common.Card;
 import com.group6.entity.common.Tile;
 import com.group6.entity.player.Player;
 import com.group6.entity.common.GameState;
+import com.group6.utils.ImageUtils;
+
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 
 import javax.swing.*;
@@ -12,6 +16,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import java.util.List;
 import java.io.File;
 
 
@@ -23,6 +28,12 @@ public class GameFrame extends JFrame {
     private DefaultListModel<Card> cardListModel;
     // 游戏日志区域
     private JTextArea logArea;
+    //卡牌显示区域
+    private JPanel cardButtonPanel;
+    private JPanel floodDiscardPanel;
+
+
+
 
     public int test;
 
@@ -34,7 +45,7 @@ public class GameFrame extends JFrame {
 
         // 设置窗口基本属性
         setTitle("Forbidden Island");
-        setSize(1024, 768);
+        setSize(1280, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -70,6 +81,14 @@ public class GameFrame extends JFrame {
 
         // 初始化游戏界面
         updateGameBoard();
+
+        //每次调整窗口大小重载图片
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateGameBoard(); // 让 updateCardList 被调用，触发重绘
+            }
+        });
 
         // 居中显示
         setLocationRelativeTo(null);
@@ -129,35 +148,20 @@ public class GameFrame extends JFrame {
         cardsPanel.setMaximumSize(new Dimension(140, 280));
         cardsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // 创建 JList 模型与列表
-        DefaultListModel<Card> cardListModel = new DefaultListModel<>();
-        JList<Card> cardList = new JList<>(cardListModel);
-        cardList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        cardList.setVisibleRowCount(5);
-        cardList.setFixedCellHeight(40);
-        cardList.setFixedCellWidth(120);
-        cardList.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        // 动态行数
+        cardButtonPanel = new JPanel();
+        cardButtonPanel.setLayout(new GridLayout(0, 1, 3, 5)); // 动态行数
+        cardButtonPanel.setBackground(new Color(245, 222, 179));
 
-        // 自定义渲染器（显示卡牌名称）
-        cardList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel();
-            label.setText(value.getName() != null ? value.getName() : value.getType().name());
-            label.setOpaque(true);
-            label.setFont(new Font("Arial", Font.PLAIN, 12));
-            label.setBackground(isSelected ? Color.YELLOW : new Color(255, 250, 205));
-            return label;
-        });
+        // 滚动面板
+        JScrollPane scrollPane = new JScrollPane(cardButtonPanel);
+        scrollPane.setPreferredSize(new Dimension(130, 250));
+        scrollPane.setBorder(null);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-        // 点击选中卡牌
-        cardList.addListSelectionListener(e -> {
-            Card selectedCard = cardList.getSelectedValue();
-            gameController.getCurrentPlayer().setSelectedCard(selectedCard);
-            logArea.append("Choose Card：" + (selectedCard != null ? selectedCard.getName() : "null") + "\n");
-        });
-
-        JScrollPane scrollPane = new JScrollPane(cardList);
-        scrollPane.setMaximumSize(new Dimension(130, 200));
         cardsPanel.add(scrollPane);
+
 
         // 合并整体
         panel.add(Box.createVerticalStrut(10));
@@ -165,11 +169,9 @@ public class GameFrame extends JFrame {
         panel.add(Box.createVerticalStrut(10));
         panel.add(cardsPanel);
 
-        // 👇 卡牌刷新注册（你需要在 updateGameBoard 中调用）
-        this.cardListModel = cardListModel;
-
         return panel;
     }
+
 
     // 创建玩家信息面板
     private JPanel createPlayerInfoPanel(Player player) {
@@ -225,7 +227,10 @@ public class GameFrame extends JFrame {
             }
         };
 
-        panel.setPreferredSize(new Dimension(524, 600));
+        panel.setPreferredSize(new Dimension(500, 500));
+        panel.setMaximumSize(new Dimension(600, 600));
+        panel.setMinimumSize(new Dimension(300, 300));
+
 
         // 改用GridBagLayout，这样我们可以精确控制每个组件的位置
         panel.setLayout(new GridBagLayout());
@@ -503,17 +508,21 @@ public class GameFrame extends JFrame {
         discardPilePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         discardPilePanel.setLayout(new BoxLayout(discardPilePanel, BoxLayout.Y_AXIS));
 
-        // 添加几个示例弃牌
-        for (int i = 0; i < 3; i++) {
-            JPanel discardCard = new JPanel();
-            discardCard.setMaximumSize(new Dimension(120, 40));
-            discardCard.setBackground(new Color(173, 216, 230));
-            discardCard.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            discardCard.setAlignmentX(Component.CENTER_ALIGNMENT);
-            discardCard.add(new JLabel("Flood " + (i + 1)));
-            discardPilePanel.add(discardCard);
-            discardPilePanel.add(Box.createVerticalStrut(5));
-        }
+        // 洪水牌弃牌堆（真实展示）
+        discardPilePanel.setLayout(new BorderLayout()); // 改为填充滚动面板
+
+        floodDiscardPanel = new JPanel();
+        floodDiscardPanel.setLayout(new BoxLayout(floodDiscardPanel, BoxLayout.Y_AXIS));
+        floodDiscardPanel.setBackground(new Color(230, 240, 255));
+
+        // 滚动展示
+        JScrollPane scrollPane = new JScrollPane(floodDiscardPanel);
+        scrollPane.setPreferredSize(new Dimension(130, 300));
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        discardPilePanel.add(scrollPane, BorderLayout.CENTER);
+
 
         // 水位指示器
         JPanel waterLevelPanel = new JPanel();
@@ -568,8 +577,11 @@ public class GameFrame extends JFrame {
                 File file = fileChooser.getSelectedFile();
                 boolean success = gameController.loadGameFromFile(file);
                 if (success) {
-                    updateGameBoard();    // 刷新地图
-                    updateCardList();     // 刷新卡牌
+                    updateGameBoard();
+                    // 刷新卡牌
+                    updateCardList();
+                    // 加载存档后更新弃牌堆
+                    updateFloodDiscardPile();
                     logArea.append("✅ Game loaded from: " + file.getName() + "\n");
                 } else {
                     JOptionPane.showMessageDialog(null, "⚠️ Load failed. Please check the save file.");
@@ -678,17 +690,91 @@ public class GameFrame extends JFrame {
         revalidate();
         repaint();
         updateCardList();
-
+        updateFloodDiscardPile();
     }
 
     private void updateCardList() {
-        if (cardListModel == null) return;
-        cardListModel.clear();
+        if (cardButtonPanel == null) return;
+        cardButtonPanel.removeAll();
+
         java.util.List<Card> hand = gameController.getCurrentPlayer().getHand();
+        Dimension panelSize = cardButtonPanel.getSize();
+
+        int defaultWidth = 120;
+        int defaultHeight = 60;
+
+        int width = panelSize.width > 20 ? panelSize.width - 10 : defaultWidth;
+        int heightPerCard = panelSize.height > 20
+                ? panelSize.height / Math.max(hand.size(), 1)
+                : defaultHeight;
+
+
         for (Card card : hand) {
-            cardListModel.addElement(card);
+            JButton button = new JButton();
+            button.setPreferredSize(new Dimension(width, heightPerCard));
+            button.setEnabled(true);
+
+            String filename = card.getName().replaceAll("[^a-zA-Z0-9]", "_") + ".png";
+            String path = "/Cards/" + filename;
+
+            ImageIcon icon = ImageUtils.loadCardImage(path, width, heightPerCard);
+            if (icon != null) {
+                button.setIcon(icon);
+            } else {
+                button.setText(card.getName());
+            }
+
+            button.addActionListener(e -> {
+                gameController.getCurrentPlayer().setSelectedCard(card);
+                logArea.append("Choose Card：" + card.getName() + "\n");
+            });
+
+            cardButtonPanel.add(button);
         }
+
+        cardButtonPanel.revalidate();
+        cardButtonPanel.repaint();
     }
+
+    // 更新洪水牌弃牌堆面板
+    public void updateFloodDiscardPile() {
+        if (floodDiscardPanel == null) return;
+
+        floodDiscardPanel.removeAll();
+
+        List<Card> discardPile = gameController.getFloodDeck().getDiscardPile();
+        int width = floodDiscardPanel.getWidth() > 20 ? floodDiscardPanel.getWidth() - 10 : 120;
+        int heightPerCard = 50;
+
+        for (int i = discardPile.size() - 1; i >= 0; i--) {
+            Card card = discardPile.get(i);
+            JButton button = new JButton();
+            button.setPreferredSize(new Dimension(width, heightPerCard));
+            button.setEnabled(true);
+            button.setFocusable(false);
+            button.setBorderPainted(false);
+            button.setContentAreaFilled(false);
+            button.setRolloverEnabled(false);
+
+
+            String filename = card.getName().replaceAll("[^a-zA-Z0-9]", "_") + ".png";
+            String path = "/FloodCards/" + filename;
+
+            ImageIcon icon = ImageUtils.loadCardImage(path, width, heightPerCard);
+            if (icon != null) {
+                button.setIcon(icon);
+            } else {
+                button.setText(card.getName());
+            }
+
+            floodDiscardPanel.add(button);
+        }
+
+        floodDiscardPanel.revalidate();
+        floodDiscardPanel.repaint();
+    }
+
+
 
     // 创建玩家图标
     private ImageIcon createPlayerIcon(String color) {
