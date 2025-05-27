@@ -50,7 +50,6 @@ public abstract class Player {
     @JsonIgnore
     private Tile currentPosition;
     //手牌
-    @JsonIgnore
     private ArrayList<Card>  hand = new ArrayList<>();
     // 手牌上限
     private static final int MAX_HAND_SIZE = 5;

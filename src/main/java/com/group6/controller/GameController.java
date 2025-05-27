@@ -296,12 +296,19 @@ public class GameController {
         return selectedTile;
     }
 
+    // FloodDeck getter
+    public FloodDeck getFloodDeck() {
+        return this.floodDeck;
+    }
+
+
     //记录玩家是否获取了宝藏
     public HashMap<String,Boolean> getCapturedTreasures(){
         return capturedTreasures;
     }
 
     public void handleWaterRise() {
+        System.out.println("🌊 Waters Rise triggered!");
         waterMeter.increase();
         floodDeck.putBack2Top();
         checkGameOver();
@@ -311,14 +318,15 @@ public class GameController {
         List<Card> drawn = treasureDeck.getCards(2); // 抽两张牌
         for (Card card : drawn) {
             if (card.getName().equals("Waters Rise")) {
-                handleWaterRise();           // 提升水位并洗回洪水牌
-                treasureDeck.discard(card);  // 弃掉水位上升牌
+                // 统一调用 useCard，复用 discard 和水位提升逻辑
+                useCard(card, null, Arrays.asList(currentPlayer));
             } else {
-                currentPlayer.getHand().add(card); // 加入当前玩家手牌
-                card.setOwner(currentPlayer);      // 设置拥有者
+                currentPlayer.getHand().add(card);
+                card.setOwner(currentPlayer);
             }
         }
     }
+
 
 
     private void switchToNextPlayer() {
@@ -497,14 +505,13 @@ public class GameController {
         }
     }
 
-    /**
-     *为避免 Card ↔ Player 的循环引用，需清空 Card 的 owner 字段
-     */
+
     public GameState getCurrentGameState() {
-        // 🔁 防止卡牌与玩家之间的循环引用
+        Map<Card, Player> originalOwners = new HashMap<>();
         for (Player p : gameBoard.getPlayers()) {
             for (Card c : p.getHand()) {
-                c.setOwner(null);  // 移除 Card 对 Player 的引用，避免序列化失败
+                originalOwners.put(c, c.getOwner());
+                c.setOwner(null);
             }
         }
 
@@ -534,7 +541,9 @@ public class GameController {
         }
         state.setPlayerPositions(positions);
 
-
+        for (Map.Entry<Card, Player> entry : originalOwners.entrySet()) {
+            entry.getKey().setOwner(entry.getValue());
+        }
         return state;
     }
 
