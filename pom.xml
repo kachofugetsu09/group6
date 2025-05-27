@@ -46,8 +46,19 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.png</include>
+                    <include>**/*.jpg</include>
+                    <include>**/*.gif</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
-            <!-- Maven Compiler Plugin -->            <plugin>
+            <!-- Maven Compiler Plugin -->
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
@@ -62,7 +73,8 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
-            </plugin>            <!-- Surefire Plugin for running tests -->
+            </plugin>
+            <!-- Surefire Plugin for running tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>

@@ -13,6 +13,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.io.File;
+import com.group6.utils.RoleImageManager;
 
 
 public class GameFrame extends JFrame {
@@ -273,6 +274,8 @@ public class GameFrame extends JFrame {
 
                 JLabel tileLabel = new JLabel();
                 tileLabel.setHorizontalAlignment(JLabel.CENTER);
+                tileLabel.setPreferredSize(new Dimension(50, 50)); // 设置标签大小
+                tileLabel.setMinimumSize(new Dimension(50, 50));
                 tilePanel.add(tileLabel, BorderLayout.CENTER);
 
                 JLabel nameLabel = new JLabel(pos.x + "," + pos.y + " " + tile.getName());
@@ -600,6 +603,8 @@ public class GameFrame extends JFrame {
                 // 重新添加标签
                 JLabel tileLabel = new JLabel();
                 tileLabel.setHorizontalAlignment(JLabel.CENTER);
+                tileLabel.setPreferredSize(new Dimension(50, 50)); // 设置标签大小
+                tileLabel.setMinimumSize(new Dimension(50, 50));
                 tilePanel.add(tileLabel, BorderLayout.CENTER);
 
                 // 添加名称标签
@@ -646,7 +651,12 @@ public class GameFrame extends JFrame {
                         // 设置玩家图标
                         ImageIcon playerIcon = createPlayerIcon(player.getColor());
                         if (playerIcon != null) {
+                            // 调整图标大小
+                            Image img = playerIcon.getImage();
+                            Image newImg = img.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                            playerIcon = new ImageIcon(newImg);
                             playerLabel.setIcon(playerIcon);
+                            System.out.println("Set icon for player at position: " + x + "," + y);
                         } else {
                             // 如果没有图标，则使用文本表示
                             switch (player.getColor()) {
@@ -692,7 +702,17 @@ public class GameFrame extends JFrame {
 
     // 创建玩家图标
     private ImageIcon createPlayerIcon(String color) {
-        // 这里应该返回根据角色颜色加载的图标
+        for (Player player : gameController.getGameBoard().getPlayers()) {
+            if (player.getColor().equals(color)) {
+                ImageIcon icon = RoleImageManager.getRoleImage(player.getRoletype());
+                if (icon != null) {
+                    System.out.println("Successfully created icon for player: " + player.getRoletype());
+                } else {
+                    System.out.println("Failed to create icon for player: " + player.getRoletype());
+                }
+                return icon;
+            }
+        }
         return null;
     }
     // 更新水位条（目前为占位实现）

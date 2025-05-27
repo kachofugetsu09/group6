@@ -11,16 +11,23 @@ import java.net.URL;
 public class ImageUtils {
     public static ImageIcon loadCardImage(String path, int width, int height) {
         try {
+            System.out.println("Attempting to load image from: " + path);
+            // 确保路径以 / 开头
+            if (!path.startsWith("/")) {
+                path = "/" + path;
+            }
             URL imageUrl = ImageUtils.class.getResource(path);
             if (imageUrl == null) {
                 System.err.println("图片资源未找到: " + path);
                 return null;
             }
 
+            System.out.println("Successfully found image at: " + imageUrl);
             BufferedImage img = ImageIO.read(imageUrl);
             Image scaled = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
             return new ImageIcon(scaled);
         } catch (IOException e) {
+            System.err.println("Error loading image: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
