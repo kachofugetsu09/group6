@@ -12,6 +12,7 @@ import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -31,6 +32,7 @@ public class GameFrame extends JFrame {
     //卡牌显示区域
     private JPanel cardButtonPanel;
     private JPanel floodDiscardPanel;
+    private JLabel cardCountLabel;
 
 
 
@@ -45,7 +47,10 @@ public class GameFrame extends JFrame {
 
         // 设置窗口基本属性
         setTitle("Forbidden Island");
-        setSize(1280, 800);
+        setSize(1920, 1080);
+        setMinimumSize(new Dimension(1920, 1080));
+        setMaximumSize(new Dimension(1920, 1080));
+        setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -58,7 +63,13 @@ public class GameFrame extends JFrame {
         // 创建中心面板
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.add(createLeftPanel(), BorderLayout.WEST);
-        centerPanel.add(createGamePanel(), BorderLayout.CENTER);
+        // 地图区域：放入一个包裹层，居中展示
+        JPanel mapWrapper = new JPanel(new GridBagLayout());
+        mapWrapper.setPreferredSize(new Dimension(600, 600));
+        mapWrapper.setBackground(new Color(40, 122, 120));
+        mapWrapper.add(createGamePanel()); // 把地图放入中间
+        centerPanel.add(mapWrapper, BorderLayout.CENTER);
+
 
         // 创建右侧双列面板
         JPanel rightSectionPanel = new JPanel(new BorderLayout());
@@ -108,12 +119,12 @@ public class GameFrame extends JFrame {
     // 创建顶部面板
     private JPanel createTopPanel() {
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(1024, 30));
+        panel.setPreferredSize(new Dimension(1024, 40));
         panel.setBackground(new Color(70, 130, 180)); // 钢蓝色
 
         JLabel titleLabel = new JLabel("Forbidden Island Game");
         titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 30));
         panel.add(titleLabel);
 
         return panel;
@@ -122,51 +133,70 @@ public class GameFrame extends JFrame {
     // 创建左侧面板
     private JPanel createLeftPanel() {
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(150, 600));
+        panel.setPreferredSize(new Dimension(260, 700));
         panel.setBackground(new Color(222, 184, 135)); // 棕褐色
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        Font sectionFont = new Font("Arial", Font.BOLD, 25);
+        Font playerFont = new Font("Arial", Font.PLAIN, 25);
 
         // 添加玩家信息区域
         JPanel playersPanel = new JPanel();
         playersPanel.setLayout(new BoxLayout(playersPanel, BoxLayout.Y_AXIS));
-        playersPanel.setBorder(BorderFactory.createTitledBorder("Players"));
+        TitledBorder playerBorder = BorderFactory.createTitledBorder("Players");
+        playerBorder.setTitleFont(new Font("Arial", Font.BOLD, 25));
+        playersPanel.setBorder(playerBorder);
         playersPanel.setBackground(new Color(245, 222, 179)); // 小麦色
-        playersPanel.setMaximumSize(new Dimension(140, 240));
+        playersPanel.setMaximumSize(new Dimension(240, 260));
         playersPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // 为每个玩家添加信息面板
         for (Player player : gameController.getGameBoard().getPlayers()) {
-            JPanel playerInfo = createPlayerInfoPanel(player);
+            JPanel playerInfo = new JPanel(new BorderLayout());
+            playerInfo.setMaximumSize(new Dimension(220, 60));
+            playerInfo.setBackground(Color.WHITE);
+            playerInfo.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+
+            JLabel nameLabel = new JLabel(player.getRoletype().name(), JLabel.CENTER);
+            nameLabel.setFont(playerFont);
+
+            JLabel posLabel = new JLabel("(" + player.getCurrentPosition().getPosition().x + "," + player.getCurrentPosition().getPosition().y + ")", JLabel.CENTER);
+            posLabel.setFont(playerFont);
+
+            playerInfo.add(nameLabel, BorderLayout.CENTER);
+            playerInfo.add(posLabel, BorderLayout.SOUTH);
+
             playersPanel.add(playerInfo);
-            playersPanel.add(Box.createVerticalStrut(5));
+            playersPanel.add(Box.createVerticalStrut(8));
         }
 
         JPanel cardsPanel = new JPanel();
         cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
-        cardsPanel.setBorder(BorderFactory.createTitledBorder("Treasure Cards"));
-        cardsPanel.setBackground(new Color(245, 222, 179)); // 小麦色
-        cardsPanel.setMaximumSize(new Dimension(140, 280));
+        TitledBorder cardsBorder = BorderFactory.createTitledBorder("Treasure Cards");
+        cardsBorder.setTitleFont(new Font("Arial", Font.BOLD, 25));
+        cardsPanel.setBorder(cardsBorder);
+        cardsPanel.setBackground(new Color(245, 222, 179));
+        cardsPanel.setMaximumSize(null);
         cardsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // 动态行数
         cardButtonPanel = new JPanel();
-        cardButtonPanel.setLayout(new GridLayout(0, 1, 3, 5)); // 动态行数
+        cardButtonPanel.setLayout(new GridLayout(0, 1, 5, 10));
         cardButtonPanel.setBackground(new Color(245, 222, 179));
 
         // 滚动面板
         JScrollPane scrollPane = new JScrollPane(cardButtonPanel);
-        scrollPane.setPreferredSize(new Dimension(130, 250));
+        scrollPane.setPreferredSize(new Dimension(220, 600));
         scrollPane.setBorder(null);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         cardsPanel.add(scrollPane);
 
-
         // 合并整体
         panel.add(Box.createVerticalStrut(10));
         panel.add(playersPanel);
-        panel.add(Box.createVerticalStrut(10));
+        panel.add(Box.createVerticalStrut(15));
         panel.add(cardsPanel);
 
         return panel;
@@ -227,19 +257,20 @@ public class GameFrame extends JFrame {
             }
         };
 
-        panel.setPreferredSize(new Dimension(500, 500));
-        panel.setMaximumSize(new Dimension(600, 600));
-        panel.setMinimumSize(new Dimension(300, 300));
+        //设置为固定大小：600x600（地图区域）
+        panel.setPreferredSize(new Dimension(1000, 900));
+        panel.setMaximumSize(new Dimension(1000, 900));
+        panel.setMinimumSize(new Dimension(1000, 900));
 
 
-        // 改用GridBagLayout，这样我们可以精确控制每个组件的位置
+        // 使用 GridBagLayout 来精确布局
         panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
         // 初始化格子面板数组
         tilePanels = new JPanel[6][6];
 
-        // 1. 先创建所有海洋格子
+        // 1. 创建默认海洋格子
         for (int y = 0; y < 6; y++) {
             for (int x = 0; x < 6; x++) {
                 gbc.gridx = x;
@@ -252,21 +283,21 @@ public class GameFrame extends JFrame {
                 emptyPanel.setBackground(new Color(40,122,120));
 
                 JLabel coordLabel = new JLabel(x + "," + y);
-                coordLabel.setHorizontalAlignment(JLabel.CENTER);
                 coordLabel.setForeground(Color.WHITE);
                 emptyPanel.add(coordLabel, BorderLayout.SOUTH);
+
 
                 panel.add(emptyPanel, gbc);
                 tilePanels[y][x] = emptyPanel;
             }
         }
 
-        // 2. 替换岛屿瓦片
+        // 2. 替换为岛屿瓦片
         for (Tile tile : gameController.getGameBoard().getTiles()) {
             Point pos = tile.getPosition();
             final Tile finalTile = tile;
 
-            int tileX = pos.x;  // 转换为数组索引
+            int tileX = pos.x;
             int tileY = pos.y;
 
             if (tileX >= 0 && tileX < 6 && tileY >= 0 && tileY < 6) {
@@ -286,7 +317,6 @@ public class GameFrame extends JFrame {
                 nameLabel.setOpaque(true);
                 tilePanel.add(nameLabel, BorderLayout.SOUTH);
 
-                
                 tilePanel.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
@@ -298,9 +328,7 @@ public class GameFrame extends JFrame {
                     }
                 });
 
-                // 移除原来的面板
                 panel.remove(tilePanels[tileY][tileX]);
-                // 添加新面板到指定位置
                 panel.add(tilePanel, gbc);
                 tilePanels[tileY][tileX] = tilePanel;
             }
@@ -309,55 +337,87 @@ public class GameFrame extends JFrame {
         return panel;
     }
 
-    // 创建右侧信息面板
+
     private JPanel createRightColumn1() {
+        // ========== 字体与尺寸（大屏适配） ==========
+        Font titleFont = new Font("Arial", Font.BOLD, 32);
+        Font subTitleFont = new Font("Arial", Font.BOLD, 26);
+        Font textFont = new Font("Arial", Font.PLAIN, 20);
+        Font buttonFont = new Font("Arial", Font.PLAIN, 20);
+        Dimension buttonSize = new Dimension(240, 60);
+
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setPreferredSize(new Dimension(200, 600));
+        panel.setPreferredSize(new Dimension(320, 1000));
+        panel.setBackground(new Color(240, 240, 240));
 
-        // 创建信息区
-        JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.setBackground(new Color(230, 230, 230));
+        // ===== 顶部标题 =====
+        JPanel titlePanel = new JPanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.setBackground(new Color(240, 240, 240));
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
 
-        // 添加标题
-        JLabel titleLabel = new JLabel("Game Info");
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        JLabel infoLabel = new JLabel("Game Info", SwingConstants.CENTER);
+        infoLabel.setFont(titleFont);
+        infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // 添加FORBIDDEN ISLAND标题
-        JLabel gameLabel = new JLabel("FORBIDDEN");
+        JLabel gameLabel = new JLabel("FORBIDDEN", SwingConstants.CENTER);
+        gameLabel.setFont(subTitleFont);
         gameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        gameLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        JLabel islandLabel = new JLabel("ISLAND");
+
+        JLabel islandLabel = new JLabel("ISLAND", SwingConstants.CENTER);
+        islandLabel.setFont(subTitleFont);
         islandLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        islandLabel.setFont(new Font("Arial", Font.BOLD, 18));
 
-        // 添加日志区域
-        JPanel logPanel = new JPanel();
-        logPanel.setLayout(new BorderLayout());
-        logPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        logPanel.setBorder(BorderFactory.createTitledBorder("Game Log"));
-        logPanel.setMaximumSize(new Dimension(180, 150));
+        titlePanel.add(infoLabel);
+        titlePanel.add(Box.createVerticalStrut(10));
+        titlePanel.add(gameLabel);
+        titlePanel.add(islandLabel);
 
-        logArea = new JTextArea(8, 15);
+        // ===== 当前玩家区域 =====
+        JPanel currentPlayerPanel = new JPanel();
+        currentPlayerPanel.setLayout(new BoxLayout(currentPlayerPanel, BoxLayout.Y_AXIS));
+        currentPlayerPanel.setBackground(new Color(240, 240, 240));
+        TitledBorder playerBorder = BorderFactory.createTitledBorder("Current Player");
+        playerBorder.setTitleFont(new Font("Arial", Font.BOLD, 25));
+        currentPlayerPanel.setBorder(playerBorder);
+
+        Player currentPlayer = gameController.getCurrentPlayer();
+        JLabel roleLabel = new JLabel("Role: " + currentPlayer.getRoletype().name());
+        roleLabel.setFont(textFont);
+        roleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel actionsLabel = new JLabel("Actions Left: " + currentPlayer.getActions());
+        actionsLabel.setFont(textFont);
+        actionsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        currentPlayerPanel.add(roleLabel);
+        currentPlayerPanel.add(Box.createVerticalStrut(10));
+        currentPlayerPanel.add(actionsLabel);
+
+        // ===== 游戏日志区域 =====
+        JPanel logPanel = new JPanel(new BorderLayout());
+        TitledBorder logBorder = BorderFactory.createTitledBorder("Game Log");
+        logBorder.setTitleFont(new Font("Arial", Font.BOLD, 25));
+        logPanel.setBorder(logBorder);
+        logPanel.setBackground(new Color(255, 255, 255));
+
+        logArea = new JTextArea(10, 20);
         logArea.setEditable(false);
-        logArea.setFont(new Font("Monospaced", Font.PLAIN, 10));
-        JScrollPane scrollPane = new JScrollPane(logArea);
+        logArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        JScrollPane logScroll = new JScrollPane(logArea);
+        logPanel.add(logScroll, BorderLayout.CENTER);
 
-        logPanel.add(scrollPane, BorderLayout.CENTER);
+        // ===== 按钮操作区域 =====
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new GridLayout(6, 1, 10, 20));
+        TitledBorder actionBorder = BorderFactory.createTitledBorder("Actions");
+        actionBorder.setTitleFont(new Font("Arial", Font.BOLD, 25));
+        buttonPanel.setBorder(actionBorder);
+        buttonPanel.setBackground(new Color(240, 240, 240));
 
-        // 创建按钮面板
-        JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
-        buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        buttonsPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
-        buttonsPanel.setMaximumSize(new Dimension(180, 200));
-        buttonsPanel.setBackground(new Color(230, 230, 230));
-
-        // 添加移动按钮
         JButton moveButton = new JButton("Move To");
-        moveButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        moveButton.setMaximumSize(new Dimension(150, 30));
+        moveButton.setFont(buttonFont);
+        moveButton.setPreferredSize(buttonSize);
         moveButton.addActionListener(e -> {
             if (gameController.moveCurrentPlayer()) {
                 updateGameBoard();
@@ -367,38 +427,32 @@ public class GameFrame extends JFrame {
             }
         });
 
-        // 添加其他按钮
-        JButton shoreUpButton = new JButton("Shore Up");
-        shoreUpButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        shoreUpButton.setMaximumSize(new Dimension(150, 30));
+        JButton shoreButton = new JButton("Shore Up");
+        shoreButton.setFont(buttonFont);
+        shoreButton.setPreferredSize(buttonSize);
 
         JButton giveCardButton = new JButton("Give Card");
-        giveCardButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        giveCardButton.setMaximumSize(new Dimension(150, 30));
+        giveCardButton.setFont(buttonFont);
+        giveCardButton.setPreferredSize(buttonSize);
 
         JButton treasureButton = new JButton("Capture Treasure");
-        treasureButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        treasureButton.setMaximumSize(new Dimension(150, 30));
+        treasureButton.setFont(buttonFont);
+        treasureButton.setPreferredSize(buttonSize);
 
-        //使用特殊效果卡片
         JButton useCardButton = new JButton("Use Card");
-        useCardButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        useCardButton.setMaximumSize(new Dimension(150, 30));
+        useCardButton.setFont(buttonFont);
+        useCardButton.setPreferredSize(buttonSize);
         useCardButton.addActionListener(e -> {
             Player player = gameController.getCurrentPlayer();
             Tile tile = gameController.getSelectedTile();
-
-            // 由玩家未来从手牌组件中设置
             Card selectedCard = player.getSelectedCard();
-
             if (selectedCard == null) {
                 logArea.append("No card selected. Cannot use.\n");
                 return;
             }
-
             boolean success = gameController.useCard(selectedCard, tile, Arrays.asList(player));
             if (success) {
-                logArea.append("Card used successfully:" + selectedCard.getName() + "\n");
+                logArea.append("Card used successfully: " + selectedCard.getName() + "\n");
                 updateGameBoard();
             } else {
                 logArea.append("Card use failed.\n");
@@ -406,159 +460,151 @@ public class GameFrame extends JFrame {
         });
 
         JButton endTurnButton = new JButton("End Turn");
-        endTurnButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        endTurnButton.setMaximumSize(new Dimension(150, 30));
-        // 给"End Turn"按钮添加点击事件
-        endTurnButton.addActionListener(event -> {
-            // 1. 处理游戏回合切换逻辑
+        endTurnButton.setFont(buttonFont);
+        endTurnButton.setPreferredSize(buttonSize);
+        endTurnButton.addActionListener(e -> {
             gameController.endTurn();
-
-            // 2. 刷新界面（格子、玩家位置等）
             updateGameBoard();
-
-            // 3. 在右侧日志中添加提示信息
             logArea.append("回合结束，切换玩家。\n");
         });
 
+        // 添加按钮
+        buttonPanel.add(moveButton);
+        buttonPanel.add(shoreButton);
+        buttonPanel.add(giveCardButton);
+        buttonPanel.add(treasureButton);
+        buttonPanel.add(useCardButton);
+        buttonPanel.add(endTurnButton);
 
-        // 添加按钮到面板
-        buttonsPanel.add(moveButton);
-        buttonsPanel.add(Box.createVerticalStrut(5));
-        buttonsPanel.add(shoreUpButton);
-        buttonsPanel.add(Box.createVerticalStrut(5));
-        buttonsPanel.add(giveCardButton);
-        buttonsPanel.add(Box.createVerticalStrut(5));
-        buttonsPanel.add(treasureButton);
-        buttonsPanel.add(Box.createVerticalStrut(5));
-        buttonsPanel.add(endTurnButton);
-        buttonsPanel.add(useCardButton);
-        buttonsPanel.add(Box.createVerticalStrut(5));
+        // ===== 合并所有区域 =====
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setBackground(new Color(240, 240, 240));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        contentPanel.add(titlePanel);
+        contentPanel.add(Box.createVerticalStrut(20));
+        contentPanel.add(currentPlayerPanel);
+        contentPanel.add(Box.createVerticalStrut(20));
+        contentPanel.add(logPanel);
+        contentPanel.add(Box.createVerticalStrut(20));
+        contentPanel.add(buttonPanel);
 
-        // 添加当前玩家信息面板
-        JPanel currentPlayerPanel = new JPanel();
-        currentPlayerPanel.setLayout(new BoxLayout(currentPlayerPanel, BoxLayout.Y_AXIS));
-        currentPlayerPanel.setBorder(BorderFactory.createTitledBorder("Current Player"));
-        currentPlayerPanel.setMaximumSize(new Dimension(180, 100));
-        currentPlayerPanel.setBackground(new Color(230, 230, 230));
-
-        // 显示当前玩家信息
-        Player currentPlayer = gameController.getCurrentPlayer();
-        JLabel playerRoleLabel = new JLabel("Role: " + currentPlayer.getRoletype().name());
-        playerRoleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel playerActionLabel = new JLabel("Actions Left: " + currentPlayer.getActions());
-        playerActionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        currentPlayerPanel.add(playerRoleLabel);
-        currentPlayerPanel.add(Box.createVerticalStrut(5));
-        currentPlayerPanel.add(playerActionLabel);
-
-        // 添加所有组件到信息面板
-        infoPanel.add(titleLabel);
-        infoPanel.add(Box.createVerticalStrut(5));
-        infoPanel.add(gameLabel);
-        infoPanel.add(islandLabel);
-        infoPanel.add(Box.createVerticalStrut(10));
-        infoPanel.add(currentPlayerPanel);
-        infoPanel.add(Box.createVerticalStrut(10));
-        infoPanel.add(logPanel);
-        infoPanel.add(Box.createVerticalStrut(10));
-        infoPanel.add(buttonsPanel);
-
-        panel.add(infoPanel, BorderLayout.CENTER);
-
+        panel.add(contentPanel, BorderLayout.CENTER);
         return panel;
     }
 
+
     // 创建右侧第二列（洪水牌区）
     private JPanel createRightColumn2() {
+        // 字体与大小（统一风格）
+        Font sectionTitleFont = new Font("Arial", Font.BOLD, 24);
+        Font labelFont = new Font("Arial", Font.PLAIN, 18);
+        Dimension pilePanelSize = new Dimension(180, 120);
+        Dimension floodCardSize = new Dimension(200, 80);
+
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(150, 600));
-        panel.setBackground(new Color(200, 230, 250)); // 淡蓝色
+        panel.setPreferredSize(new Dimension(260, 800));
+        panel.setBackground(new Color(220, 235, 250));
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // 添加洪水牌标题
+        // ===== 标题 =====
         JLabel titleLabel = new JLabel("Flood Cards");
+        titleLabel.setFont(sectionTitleFont);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(20));
 
-        // 洪水牌抽牌堆
+        // ===== 抽牌堆区域 =====
         JPanel drawPilePanel = new JPanel();
-        drawPilePanel.setBorder(BorderFactory.createTitledBorder("Draw Pile"));
-        drawPilePanel.setMaximumSize(new Dimension(140, 100));
-        drawPilePanel.setBackground(new Color(230, 240, 255));
-        drawPilePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        drawPilePanel.setPreferredSize(pilePanelSize);
+        drawPilePanel.setBackground(new Color(200, 220, 255));
+        drawPilePanel.setLayout(new BorderLayout());
+        TitledBorder drawBorder = BorderFactory.createTitledBorder("Draw Pile");
+        drawBorder.setTitleFont(new Font("Arial", Font.BOLD, 22));
+        drawPilePanel.setBorder(drawBorder);
 
-        JPanel cardPanel = new JPanel();
-        cardPanel.setPreferredSize(new Dimension(80, 60));
-        cardPanel.setBackground(new Color(0, 102, 204));
-        cardPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        JPanel drawCard = new JPanel();
+        drawCard.setPreferredSize(new Dimension(40, 40));
+        drawCard.setBackground(new Color(0, 102, 204));
+        drawCard.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
-        JLabel cardCountLabel = new JLabel("24 cards");
+        cardCountLabel = new JLabel("0 cards");
         cardCountLabel.setForeground(Color.WHITE);
-        cardPanel.add(cardCountLabel);
-        drawPilePanel.add(cardPanel);
+        cardCountLabel.setFont(labelFont);
+        drawCard.add(cardCountLabel);
+        drawPilePanel.add(drawCard, BorderLayout.CENTER);
+        panel.add(drawPilePanel);
+        panel.add(Box.createVerticalStrut(20));
 
-        // 洪水牌弃牌堆
-        JPanel discardPilePanel = new JPanel();
-        discardPilePanel.setBorder(BorderFactory.createTitledBorder("Discard Pile"));
-        discardPilePanel.setMaximumSize(new Dimension(140, 400));
-        discardPilePanel.setBackground(new Color(230, 240, 255));
-        discardPilePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        discardPilePanel.setLayout(new BoxLayout(discardPilePanel, BoxLayout.Y_AXIS));
-
-        // 洪水牌弃牌堆（真实展示）
-        discardPilePanel.setLayout(new BorderLayout()); // 改为填充滚动面板
+        // ===== 弃牌堆区域 =====
+        JPanel discardPanel = new JPanel();
+        discardPanel.setLayout(new BorderLayout());
+        discardPanel.setBackground(new Color(230, 240, 255));
+        TitledBorder discardBorder = BorderFactory.createTitledBorder("Discard Pile");
+        discardBorder.setTitleFont(new Font("Arial", Font.BOLD, 22));
+        discardPanel.setBorder(discardBorder);
+        discardPanel.setPreferredSize(new Dimension(240, 400));
 
         floodDiscardPanel = new JPanel();
         floodDiscardPanel.setLayout(new BoxLayout(floodDiscardPanel, BoxLayout.Y_AXIS));
         floodDiscardPanel.setBackground(new Color(230, 240, 255));
 
-        // 滚动展示
         JScrollPane scrollPane = new JScrollPane(floodDiscardPanel);
-        scrollPane.setPreferredSize(new Dimension(130, 300));
+        scrollPane.setPreferredSize(new Dimension(220, 360));
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        discardPanel.add(scrollPane, BorderLayout.CENTER);
 
-        discardPilePanel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(discardPanel);
+        panel.add(Box.createVerticalStrut(20));
 
-
-        // 水位指示器
+        // ===== 水位指示器 =====
         JPanel waterLevelPanel = new JPanel();
-        waterLevelPanel.setBorder(BorderFactory.createTitledBorder("Water Level"));
-        waterLevelPanel.setMaximumSize(new Dimension(140, 60));
-        waterLevelPanel.setBackground(new Color(230, 240, 255));
-        waterLevelPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        waterLevelPanel.setPreferredSize(new Dimension(240, 80));
+        waterLevelPanel.setBackground(new Color(200, 230, 255));
+        TitledBorder waterBorder = BorderFactory.createTitledBorder("Water Level");
+        waterBorder.setTitleFont(new Font("Arial", Font.BOLD, 22));
+        waterLevelPanel.setBorder(waterBorder);
 
         JProgressBar waterLevelBar = new JProgressBar(0, 10);
         waterLevelBar.setValue(1);
-        waterLevelBar.setStringPainted(true);
         waterLevelBar.setString("Level 1");
-        waterLevelBar.setPreferredSize(new Dimension(120, 20));
-        waterLevelPanel.add(waterLevelBar);
+        waterLevelBar.setFont(labelFont);
+        waterLevelBar.setStringPainted(true);
+        waterLevelBar.setPreferredSize(new Dimension(200, 30));
 
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(titleLabel);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(drawPilePanel);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(discardPilePanel);
-        panel.add(Box.createVerticalStrut(10));
+        waterLevelPanel.add(waterLevelBar);
         panel.add(waterLevelPanel);
 
         return panel;
     }
 
+
+
     // 创建底部面板
     private JPanel createBottomPanel() {
+        // 字体与按钮尺寸
+        Font buttonFont = new Font("Arial", Font.BOLD, 18);
+        Dimension buttonSize = new Dimension(180, 50);
+
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(1024, 50));
-        panel.setBackground(new Color(70, 130, 180)); // 钢蓝色
+        panel.setPreferredSize(new Dimension(1920, 80));
+        panel.setBackground(new Color(70, 130, 180)); // Steel blue
+        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 40, 20));
 
         JButton saveButton = new JButton("Save Game");
+        saveButton.setFont(buttonFont);
+        saveButton.setPreferredSize(buttonSize);
+
         JButton loadButton = new JButton("Load Game");
+        loadButton.setFont(buttonFont);
+        loadButton.setPreferredSize(buttonSize);
+
         JButton quitButton = new JButton("Quit Game");
+        quitButton.setFont(buttonFont);
+        quitButton.setPreferredSize(buttonSize);
 
         // 保存游戏按钮逻辑
         saveButton.addActionListener(e -> {
@@ -578,9 +624,7 @@ public class GameFrame extends JFrame {
                 boolean success = gameController.loadGameFromFile(file);
                 if (success) {
                     updateGameBoard();
-                    // 刷新卡牌
                     updateCardList();
-                    // 加载存档后更新弃牌堆
                     updateFloodDiscardPile();
                     logArea.append("✅ Game loaded from: " + file.getName() + "\n");
                 } else {
@@ -598,6 +642,7 @@ public class GameFrame extends JFrame {
 
         return panel;
     }
+
 
 
 
@@ -700,18 +745,13 @@ public class GameFrame extends JFrame {
         java.util.List<Card> hand = gameController.getCurrentPlayer().getHand();
         Dimension panelSize = cardButtonPanel.getSize();
 
-        int defaultWidth = 120;
-        int defaultHeight = 60;
-
-        int width = panelSize.width > 20 ? panelSize.width - 10 : defaultWidth;
-        int heightPerCard = panelSize.height > 20
-                ? panelSize.height / Math.max(hand.size(), 1)
-                : defaultHeight;
-
+        int width = panelSize.width > 20 ? panelSize.width - 10 : 220;
+        int heightPerCard = panelSize.height > 20 ? panelSize.height / Math.max(hand.size(), 1) : 80;
 
         for (Card card : hand) {
             JButton button = new JButton();
             button.setPreferredSize(new Dimension(width, heightPerCard));
+            button.setFont(new Font("Arial", Font.PLAIN, 14));
             button.setEnabled(true);
 
             String filename = card.getName().replaceAll("[^a-zA-Z0-9]", "_") + ".png";
@@ -740,11 +780,18 @@ public class GameFrame extends JFrame {
     public void updateFloodDiscardPile() {
         if (floodDiscardPanel == null) return;
 
+        if (cardCountLabel != null) {
+            int total = gameController.getFloodDeck().getDeck().size() + gameController.getFloodDeck().getDiscardPile().size();
+            int discard = gameController.getFloodDeck().getDiscardPile().size();
+            int remaining = total - discard;
+            cardCountLabel.setText(remaining + " cards");
+        }
+
         floodDiscardPanel.removeAll();
 
         List<Card> discardPile = gameController.getFloodDeck().getDiscardPile();
-        int width = floodDiscardPanel.getWidth() > 20 ? floodDiscardPanel.getWidth() - 10 : 120;
-        int heightPerCard = 50;
+        int width = 210;
+        int heightPerCard = 210;
 
         for (int i = discardPile.size() - 1; i >= 0; i--) {
             Card card = discardPile.get(i);
