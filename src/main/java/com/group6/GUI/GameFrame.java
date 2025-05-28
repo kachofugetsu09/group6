@@ -6,6 +6,7 @@ import com.group6.entity.common.Tile;
 import com.group6.entity.player.Player;
 import com.group6.entity.common.GameState;
 import com.group6.utils.ImageUtils;
+import com.group6.utils.RoleImageManager;
 
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -257,14 +258,12 @@ public class GameFrame extends JFrame {
             }
         };
 
-        //设置为固定大小：600x600（地图区域）
+        //设置为固定大小
         panel.setPreferredSize(new Dimension(1000, 900));
         panel.setMaximumSize(new Dimension(1000, 900));
         panel.setMinimumSize(new Dimension(1000, 900));
+        panel.setLayout(new GridLayout(6, 6, 4, 4));
 
-
-        // 使用 GridBagLayout 来精确布局
-        panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
         // 初始化格子面板数组
@@ -281,6 +280,7 @@ public class GameFrame extends JFrame {
 
                 JPanel emptyPanel = new JPanel(new BorderLayout());
                 emptyPanel.setBackground(new Color(40,122,120));
+                emptyPanel.setPreferredSize(new Dimension(150, 150));
 
                 JLabel coordLabel = new JLabel(x + "," + y);
                 coordLabel.setForeground(Color.WHITE);
@@ -314,6 +314,7 @@ public class GameFrame extends JFrame {
                 JLabel nameLabel = new JLabel(pos.x + "," + pos.y + " " + tile.getName());
                 nameLabel.setHorizontalAlignment(JLabel.CENTER);
                 nameLabel.setBackground(new Color(210, 180, 140));
+                tilePanel.setPreferredSize(new Dimension(150, 150));
                 nameLabel.setOpaque(true);
                 tilePanel.add(nameLabel, BorderLayout.SOUTH);
 
@@ -825,9 +826,20 @@ public class GameFrame extends JFrame {
 
     // 创建玩家图标
     private ImageIcon createPlayerIcon(String color) {
-        // 这里应该返回根据角色颜色加载的图标
+        for (Player player : gameController.getGameBoard().getPlayers()) {
+            if (player.getColor().equals(color)) {
+                ImageIcon icon = RoleImageManager.getRoleImage(player.getRoletype());
+                if (icon != null) {
+                    System.out.println("Successfully created icon for player: " + player.getRoletype());
+                } else {
+                    System.out.println("Failed to create icon for player: " + player.getRoletype());
+                }
+                return icon;
+            }
+        }
         return null;
     }
+
     // 更新水位条（目前为占位实现）
     private void updateWaterLevel() {
         // TODO: 可在此更新右侧水位进度条
