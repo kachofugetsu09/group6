@@ -36,6 +36,13 @@ public class GameController {
         initializeGame();
     }
 
+    // 新增构造器：支持传入难度参数
+    public GameController(Difficulty difficulty) {
+        this.difficulty = difficulty;
+        initializeGame();
+    }
+
+
     public static GameController getInstance() {
         if (instance == null) {
             instance = new GameController();
@@ -52,7 +59,6 @@ public class GameController {
 
 
         // 替换为 Difficulty 初始化
-        Difficulty difficulty = Difficulty.MEDIUM; // TODO: 可从 UI 读取设置
         this.difficulty = difficulty;
 
         int initialRiseCount = difficulty.getRiseCount();

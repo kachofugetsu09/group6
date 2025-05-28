@@ -42,9 +42,9 @@ public class GameFrame extends JFrame {
 
     private ArrayList<Point> validTilePositions = Tile.getValidTilePositions();
 
-    public GameFrame() {
+    public GameFrame(GameController gameController) {
         // 初始化游戏控制器
-        gameController = new GameController();
+        this.gameController = gameController;
 
         // 设置窗口基本属性
         setTitle("Forbidden Island");
