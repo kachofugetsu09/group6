@@ -28,18 +28,18 @@ public class FloodDeck extends Deck {
     @Override
     protected void initialize() {
         String[] tileNames = {
-                "Temple of the Moon", "Temple of the Sun",
-                "Coral Palace", "Tidal Palace",
-                "Cave of Embers", "Cave of Shadows",
-                "Whispering Garden", "Howling Garden",
-                "Bronze Gate", "Silver Gate",
-                "Gold Gate", "Iron Gate",
-                "Fools' Landing", "Observatory",
-                "Crimson Forest", "Lost Lagoon",
-                "Dunes of Deception", "Phantom Rock",
-                "Breakers Bridge", "Cliffs of Abandon",
-                "Misty Marsh", "Watchtower",
-                "Twilight Hollow", "Flooded Ruins"
+                "Temple_of_the_Moon", "Temple_of_the_Sun",
+                "Coral_Palace", "Tidal_Palace",
+                "Cave_of_Embers", "Cave_of_Shadows",
+                "Whispering_Garden", "Howling_Garden",
+                "Bronze_Gate", "Silver_Gate",
+                "Gold_Gate", "Iron_Gate",
+                "Fools'_Landing", "Observatory",
+                "Crimson_Forest", "Lost_Lagoon",
+                "Dunes_of_Deception", "Phantom_Rock",
+                "Breakers_Bridge", "Cliffs_of_Abandon",
+                "Misty_Marsh", "Watchtower",
+                "Twilight_Hollow", "Copper_Gate"
         };
 
         for (String name : tileNames) {
