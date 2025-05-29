@@ -83,18 +83,18 @@ public class GameController {
         List<Tile> tiles = new ArrayList<>();
         // 预定义的瓦片名称，可以根据游戏规则自定义
         String[] tileNames = {
-                "Temple of the Moon", "Temple of the Sun",
-                "Coral Palace", "Tidal Palace",
-                "Cave of Embers", "Cave of Shadows",
-                "Whispering Garden", "Howling Garden",
-                "Bronze Gate", "Silver Gate",
-                "Gold Gate", "Iron Gate",
-                "Fools' Landing", "Observatory",
-                "Crimson Forest", "Lost Lagoon",
-                "Dunes of Deception", "Phantom Rock",
-                "Breakers Bridge", "Cliffs of Abandon",
-                "Misty Marsh", "Watchtower",
-                "Twilight Hollow", "Flooded Ruins"
+                "Temple_of_the_Moon", "Temple_of_the_Sun",
+                "Coral_Palace", "Tidal_Palace",
+                "Cave_of_Embers", "Cave_of_Shadows",
+                "Whispering_Garden", "Howling_Garden",
+                "Bronze_Gate", "Silver_Gate",
+                "Gold_Gate", "Iron_Gate",
+                "Fools_Landing", "Observatory",
+                "Crimson_Forest", "Lost_Lagoon",
+                "Dunes_of_Deception", "Phantom_Rock",
+                "Breakers_Bridge", "Cliffs_of_Abandon",
+                "Misty_Marsh", "Watchtower",
+                "Twilight_Hollow", "Copper_Gate"
         };
         for (int i = 0; i < 24; i++) {
             // 创建瓦片，初始位置为(0,0)，稍后会随机分配位置
@@ -150,7 +150,7 @@ public class GameController {
 
 
         gameBoard.setPlayers(players);
-        // 初始化每位玩家的初始牌（不包含“水位上升”）
+        // 初始化每位玩家的初始牌（不包含"水位上升"）
         for (Player player : players) {
             List<Card> initialCards = treasureDeck.getNoRiseCards(2);
             for (Card card : initialCards) {
@@ -565,5 +565,8 @@ public class GameController {
         return true;
     }
 
+    public WaterMeter getWaterMeter() {
+        return this.waterMeter;
+    }
 
 }

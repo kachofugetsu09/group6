@@ -258,41 +258,34 @@ public class GameFrame extends JFrame {
             }
         };
 
-        //设置为固定大小
         panel.setPreferredSize(new Dimension(1000, 900));
         panel.setMaximumSize(new Dimension(1000, 900));
         panel.setMinimumSize(new Dimension(1000, 900));
         panel.setLayout(new GridLayout(6, 6, 4, 4));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-
         // 初始化格子面板数组
         tilePanels = new JPanel[6][6];
 
-        // 1. 创建默认海洋格子
+        // 创建一个辅助方法来判断位置是否应该是海洋
         for (int y = 0; y < 6; y++) {
             for (int x = 0; x < 6; x++) {
-                gbc.gridx = x;
-                gbc.gridy = y;
-                gbc.fill = GridBagConstraints.BOTH;
-                gbc.weightx = 1.0;
-                gbc.weighty = 1.0;
+                JPanel tilePanel;
+                
+                // 判断是否是角落区域（应该保持为海洋的位置）
+                if (isOceanPosition(x, y)) {
+                    // 创建海洋面板
+                    tilePanel = createOceanPanel(x, y);
+                } else {
+                    // 创建可放置瓦片的面板
+                    tilePanel = createEmptyTilePanel(x, y);
+                }
 
-                JPanel emptyPanel = new JPanel(new BorderLayout());
-                emptyPanel.setBackground(new Color(40,122,120));
-                emptyPanel.setPreferredSize(new Dimension(150, 150));
-
-                JLabel coordLabel = new JLabel(x + "," + y);
-                coordLabel.setForeground(Color.WHITE);
-                emptyPanel.add(coordLabel, BorderLayout.SOUTH);
-
-
-                panel.add(emptyPanel, gbc);
-                tilePanels[y][x] = emptyPanel;
+                panel.add(tilePanel);
+                tilePanels[y][x] = tilePanel;
             }
         }
 
-        // 2. 替换为岛屿瓦片
+        // 放置瓦片（只在非海洋区域）
         for (Tile tile : gameController.getGameBoard().getTiles()) {
             Point pos = tile.getPosition();
             final Tile finalTile = tile;
@@ -300,42 +293,139 @@ public class GameFrame extends JFrame {
             int tileX = pos.x;
             int tileY = pos.y;
 
-            if (tileX >= 0 && tileX < 6 && tileY >= 0 && tileY < 6) {
-                gbc.gridx = tileX;
-                gbc.gridy = tileY;
-
-                JPanel tilePanel = new JPanel(new BorderLayout());
-                tilePanel.setBackground(new Color(200, 200, 160));
-
-                JLabel tileLabel = new JLabel();
-                tileLabel.setHorizontalAlignment(JLabel.CENTER);
-                tilePanel.add(tileLabel, BorderLayout.CENTER);
-
-                JLabel nameLabel = new JLabel(pos.x + "," + pos.y + " " + tile.getName());
-                nameLabel.setHorizontalAlignment(JLabel.CENTER);
-                nameLabel.setBackground(new Color(210, 180, 140));
-                tilePanel.setPreferredSize(new Dimension(150, 150));
-                nameLabel.setOpaque(true);
-                tilePanel.add(nameLabel, BorderLayout.SOUTH);
-
-                tilePanel.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        gameController.selectTile(finalTile);
-                        updateGameBoard();
-                        logArea.append("选择了瓦片: " + finalTile.getName() +
-                                "，在" + finalTile.getPosition().x + "," +
-                                finalTile.getPosition().y + "\n");
-                    }
-                });
-
+            if (!isOceanPosition(tileX, tileY)) {
+                JPanel tilePanel = createTilePanel(tile);
                 panel.remove(tilePanels[tileY][tileX]);
-                panel.add(tilePanel, gbc);
+                panel.add(tilePanel, tileY * 6 + tileX);
                 tilePanels[tileY][tileX] = tilePanel;
             }
         }
 
         return panel;
+    }
+
+    // 判断是否是应该保持为海洋的位置
+    private boolean isOceanPosition(int x, int y) {
+        // 左上角
+        if ((x == 0 && y == 0) || (x == 0 && y == 1) || (x == 1 && y == 0)) return true;
+        
+        // 右上角
+        if ((x == 4 && y == 0) || (x == 5 && y == 0) || (x == 5 && y == 1)) return true;
+        
+        // 左下角
+        if ((x == 0 && y == 4) || (x == 0 && y == 5) || (x == 1 && y == 5)) return true;
+        
+        // 右下角
+        if ((x == 4 && y == 5) || (x == 5 && y == 4) || (x == 5 && y == 5)) return true;
+        
+        return false;
+    }
+
+    // 创建海洋面板
+    private JPanel createOceanPanel(int x, int y) {
+        JPanel oceanPanel = new JPanel();
+        oceanPanel.setLayout(new BorderLayout());
+        oceanPanel.setBackground(new Color(40, 122, 120));
+        oceanPanel.setPreferredSize(new Dimension(150, 150));
+        
+        // 创建分层面板
+        JLayeredPane layeredPane = new JLayeredPane();
+        layeredPane.setPreferredSize(new Dimension(150, 150));
+        oceanPanel.add(layeredPane, BorderLayout.CENTER);
+
+        // 只添加坐标标签在最上层
+        JLabel coordLabel = new JLabel(x + "," + y);
+        coordLabel.setBounds(0, 0, 150, 30);
+        coordLabel.setHorizontalAlignment(JLabel.CENTER);
+        coordLabel.setForeground(Color.WHITE);
+        coordLabel.setBackground(new Color(40, 122, 120, 200));
+        coordLabel.setOpaque(true);
+        layeredPane.add(coordLabel, JLayeredPane.DRAG_LAYER);
+
+        return oceanPanel;
+    }
+
+    // 创建空的可放置瓦片的面板
+    private JPanel createEmptyTilePanel(int x, int y) {
+        JPanel emptyPanel = new JPanel(new BorderLayout());
+        emptyPanel.setBackground(new Color(200, 200, 160));
+        emptyPanel.setPreferredSize(new Dimension(150, 150));
+        
+        JLabel coordLabel = new JLabel(x + "," + y);
+        coordLabel.setHorizontalAlignment(JLabel.CENTER);
+        coordLabel.setBackground(new Color(210, 180, 140));
+        coordLabel.setOpaque(true);
+        emptyPanel.add(coordLabel, BorderLayout.NORTH);
+        
+        return emptyPanel;
+    }
+
+    // 创建瓦片面板
+    private JPanel createTilePanel(Tile tile) {
+        Point pos = tile.getPosition();
+        JPanel tilePanel = new JPanel();
+        tilePanel.setLayout(new BorderLayout());
+        tilePanel.setBackground(new Color(200, 200, 160));
+        tilePanel.setPreferredSize(new Dimension(150, 150));
+
+        // 创建分层面板
+        JLayeredPane layeredPane = new JLayeredPane();
+        layeredPane.setPreferredSize(new Dimension(150, 150));
+        tilePanel.add(layeredPane, BorderLayout.CENTER);
+
+        // 1. 最底层：瓦片图片（层次0）
+        JLabel tileLabel = new JLabel();
+        tileLabel.setBounds(0, 0, 150, 150);
+        tileLabel.setHorizontalAlignment(JLabel.CENTER);
+        
+        // 根据瓦片状态选择对应的图片路径
+        String filename = tile.getName().replaceAll("[^a-zA-Z0-9]", "_") + ".png";
+        String path;
+        if (tile.isFlooded() && !tile.isSunk()) {
+            // 如果瓦片被淹没但未沉没，使用SubmersedTiles目录下的图片
+            path = "/SubmersedTiles/" + filename;
+        } else {
+            // 正常状态使用FloodCards目录下的图片
+            path = "/FloodCards/" + filename;
+        }
+        
+        ImageIcon icon = ImageUtils.loadCardImage(path, 150, 150);
+        if (icon != null) {
+            tileLabel.setIcon(icon);
+        } else {
+            // 如果加载失败，可以添加一些视觉提示
+            System.out.println("无法加载图片: " + path);
+            tileLabel.setText(tile.getName());
+        }
+        layeredPane.add(tileLabel, JLayeredPane.DEFAULT_LAYER); // 最底层
+
+        // 2. 中间层：玩家图标（层次1）
+        JLabel playerLabel = new JLabel();
+        playerLabel.setBounds(45, 45, 60, 60); // 居中且稍小一些
+        playerLabel.setHorizontalAlignment(JLabel.CENTER);
+        layeredPane.add(playerLabel, JLayeredPane.PALETTE_LAYER); // 中间层
+
+        // 3. 最上层：坐标标签（层次2）
+        JLabel coordLabel = new JLabel(pos.x + "," + pos.y + " " + tile.getName());
+        coordLabel.setBounds(0, 0, 150, 30); // 顶部30像素高度
+        coordLabel.setHorizontalAlignment(JLabel.CENTER);
+        coordLabel.setBackground(new Color(210, 180, 140, 200)); // 添加一点透明度
+        coordLabel.setOpaque(true);
+        layeredPane.add(coordLabel, JLayeredPane.DRAG_LAYER); // 最上层
+
+        // 添加点击事件
+        layeredPane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                gameController.selectTile(tile);
+                updateGameBoard();
+                logArea.append("选择了瓦片: " + tile.getName() +
+                        "，在" + tile.getPosition().x + "," +
+                        tile.getPosition().y + "\n");
+            }
+        });
+
+        return tilePanel;
     }
 
 
@@ -649,94 +739,77 @@ public class GameFrame extends JFrame {
 
     // 更新游戏界面
     private void updateGameBoard() {
-        // 清空所有格子的玩家标记
         for (int y = 0; y < 6; y++) {
             for (int x = 0; x < 6; x++) {
-                JPanel tilePanel = tilePanels[y][x];
-                tilePanel.removeAll();
-
-                // 重新添加标签
-                JLabel tileLabel = new JLabel();
-                tileLabel.setHorizontalAlignment(JLabel.CENTER);
-                tilePanel.add(tileLabel, BorderLayout.CENTER);
-
-                // 添加名称标签
-                JLabel nameLabel = new JLabel(x + "," + y);
-                nameLabel.setHorizontalAlignment(JLabel.CENTER);
-                nameLabel.setBackground(new Color(210, 180, 140));
-                nameLabel.setOpaque(true);
-                tilePanel.add(nameLabel, BorderLayout.SOUTH);
-
-                // 设置默认颜色
-                tilePanel.setBackground(new Color(200, 200, 160));
-
-                // 检查是否有洪水
-                Tile tile = gameController.findTileAt(x, y);
-                if (tile != null && tile.isFlooded()) {
-                    tilePanel.setBackground(new Color(100, 180, 255)); // 淡蓝色表示被淹没
+                if (isOceanPosition(x, y)) {
+                    // 海洋格子保持原样
+                    continue;
                 }
-            }
-            updateWaterLevel();
-        }
 
-        // 高亮选中的格子
-        Tile selectedTile = gameController.getSelectedTile();
-        if (selectedTile != null) {
-            int x = selectedTile.getPosition().x;
-            int y = selectedTile.getPosition().y;
-            if (x >= 0 && x < 6 && y >= 0 && y < 6) {
-                tilePanels[y][x].setBackground(new Color(255, 255, 0)); // 黄色高亮
-            }
-        }
+                JPanel tilePanel = tilePanels[y][x];
+                JLayeredPane layeredPane = (JLayeredPane) tilePanel.getComponent(0);
+                
+                // 更新瓦片状态
+                Tile tile = gameController.findTileAt(x, y);
+                if (tile != null) {
+                    // 根据瓦片状态选择对应的图片路径
+                    String filename = tile.getName().replaceAll("[^a-zA-Z0-9]", "_") + ".png";
+                    String path;
+                    if (tile.isFlooded() && !tile.isSunk()) {
+                        path = "/SubmersedTiles/" + filename;
+                    } else {
+                        path = "/FloodCards/" + filename;
+                    }
+                    
+                    ImageIcon icon = ImageUtils.loadCardImage(path, 150, 150);
+                    if (icon != null) {
+                        JLabel tileLabel = (JLabel) layeredPane.getComponent(0);
+                        tileLabel.setIcon(icon);
+                    }
 
-        // 显示玩家位置
+                    // 设置背景颜色（可选，因为已经有图片区分了）
+                    if (tile.isFlooded()) {
+                        tilePanel.setBackground(new Color(100, 180, 255, 128)); // 半透明的蓝色
+                    } else {
+                        tilePanel.setBackground(new Color(200, 200, 160));
+                    }
+
+                    // 更新玩家图标
+                    JLabel playerLabel = (JLabel) layeredPane.getComponent(1);
+                    playerLabel.setIcon(null); // 清除原有图标
+                    
+                    // 检查是否有玩家在此位置
         for (Player player : gameController.getGameBoard().getPlayers()) {
-            player.setGameController(gameController);
-            if (player.getCurrentPosition() != null) {
-                Point pos = player.getCurrentPosition().getPosition();
-                if (pos != null) {
-                    int x = pos.x;
-                    int y = pos.y;
-                    if (x >= 0 && x < 6 && y >= 0 && y < 6) {
-                        JPanel tilePanel = tilePanels[y][x];
-                        JLabel playerLabel = (JLabel) tilePanel.getComponent(0);
-
-                        // 设置玩家图标
+                        if (player.getCurrentPosition() != null &&
+                            player.getCurrentPosition().getPosition().equals(new Point(x, y))) {
                         ImageIcon playerIcon = createPlayerIcon(player.getColor());
                         if (playerIcon != null) {
-                            playerLabel.setIcon(playerIcon);
-                        } else {
-                            // 如果没有图标，则使用文本表示
-                            switch (player.getColor()) {
-                                case "RED":
-                                    playerLabel.setText("E"); // Engineer
-                                    playerLabel.setForeground(Color.RED);
-                                    break;
-                                case "BLUE":
-                                    playerLabel.setText("P"); // Pilot
-                                    playerLabel.setForeground(Color.BLUE);
-                                    break;
-                                case "GREEN":
-                                    playerLabel.setText("X"); // Explorer
-                                    playerLabel.setForeground(Color.GREEN);
-                                    break;
-                                case "BLACK":
-                                    playerLabel.setText("D"); // Diver
-                                    playerLabel.setForeground(Color.BLACK);
-                                    break;
+                                // 调整图标大小
+                                Image scaledImage = playerIcon.getImage()
+                                    .getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+                                playerLabel.setIcon(new ImageIcon(scaledImage));
                             }
-                            playerLabel.setFont(new Font("Arial", Font.BOLD, 20));
+                            break;
                         }
                     }
                 }
             }
         }
 
-        // 刷新UI
+        // 高亮选中的格子
+        Tile selectedTile = gameController.getSelectedTile();
+        if (selectedTile != null) {
+            Point pos = selectedTile.getPosition();
+            if (!isOceanPosition(pos.x, pos.y)) {
+                tilePanels[pos.y][pos.x].setBackground(new Color(255, 255, 0));
+            }
+        }
+
         revalidate();
         repaint();
         updateCardList();
         updateFloodDiscardPile();
+        updateWaterLevel();
     }
 
     private void updateCardList() {
@@ -842,7 +915,70 @@ public class GameFrame extends JFrame {
 
     // 更新水位条（目前为占位实现）
     private void updateWaterLevel() {
-        // TODO: 可在此更新右侧水位进度条
+        // 获取当前水位（假设范围是1-10）
+        int currentLevel = gameController.getWaterMeter().getLevel();
+        
+        // 构建水位计图片路径
+        String waterMeterImagePath = "/WaterMeter/water_level_" + currentLevel + ".png";
+        
+        // 在右侧面板中找到水位计面板
+        JPanel waterLevelPanel = null;
+        Component[] components = getRootPane().getContentPane().getComponents();
+        for (Component comp : components) {
+            if (comp instanceof JPanel) {
+                Component[] subComps = ((JPanel) comp).getComponents();
+                for (Component subComp : subComps) {
+                    if (subComp instanceof JPanel) {
+                        Component[] rightPanels = ((JPanel) subComp).getComponents();
+                        for (Component rightPanel : rightPanels) {
+                            if (rightPanel instanceof JPanel && 
+                                ((JPanel) rightPanel).getBorder() != null && 
+                                ((JPanel) rightPanel).getBorder().toString().contains("Water Level")) {
+                                waterLevelPanel = (JPanel) rightPanel;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (waterLevelPanel != null) {
+            // 清除现有内容
+            waterLevelPanel.removeAll();
+            
+            // 加载并显示水位计图片
+            ImageIcon waterMeterIcon = ImageUtils.loadCardImage(waterMeterImagePath, 200, 30);
+            if (waterMeterIcon != null) {
+                JLabel waterMeterLabel = new JLabel(waterMeterIcon);
+                waterLevelPanel.add(waterMeterLabel);
+            } else {
+                // 如果图片加载失败，使用进度条作为备选显示
+                JProgressBar waterLevelBar = new JProgressBar(0, 10);
+                waterLevelBar.setValue(currentLevel);
+                waterLevelBar.setString("Level " + currentLevel);
+                waterLevelBar.setStringPainted(true);
+                waterLevelBar.setFont(new Font("Arial", Font.PLAIN, 18));
+                waterLevelBar.setPreferredSize(new Dimension(200, 30));
+                
+                // 根据水位设置颜色
+                if (currentLevel <= 2) {
+                    waterLevelBar.setForeground(new Color(0, 255, 0)); // 绿色
+                } else if (currentLevel <= 5) {
+                    waterLevelBar.setForeground(new Color(255, 255, 0)); // 黄色
+                } else if (currentLevel <= 7) {
+                    waterLevelBar.setForeground(new Color(255, 165, 0)); // 橙色
+                } else {
+                    waterLevelBar.setForeground(new Color(255, 0, 0)); // 红色
+                }
+                
+                waterLevelPanel.add(waterLevelBar);
+            }
+            
+            // 刷新面板
+            waterLevelPanel.revalidate();
+            waterLevelPanel.repaint();
+        }
     }
 
 }

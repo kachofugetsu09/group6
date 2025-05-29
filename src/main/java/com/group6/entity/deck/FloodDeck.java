@@ -34,7 +34,7 @@ public class FloodDeck extends Deck {
                 "Whispering_Garden", "Howling_Garden",
                 "Bronze_Gate", "Silver_Gate",
                 "Gold_Gate", "Iron_Gate",
-                "Fools'_Landing", "Observatory",
+                "Fools_Landing", "Observatory",
                 "Crimson_Forest", "Lost_Lagoon",
                 "Dunes_of_Deception", "Phantom_Rock",
                 "Breakers_Bridge", "Cliffs_of_Abandon",
