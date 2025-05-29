@@ -20,6 +20,8 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.io.File;
+import java.net.URL;
+import javax.imageio.ImageIO;
 
 
 public class GameFrame extends JFrame {
@@ -48,10 +50,8 @@ public class GameFrame extends JFrame {
 
         // 设置窗口基本属性
         setTitle("Forbidden Island");
-        setSize(1920, 1080);
-        setMinimumSize(new Dimension(1920, 1080));
-        setMaximumSize(new Dimension(1920, 1080));
-        setResizable(false);
+        setSize(1680, 960);  // 设置初始大小
+        setResizable(true);  // 允许调整大小
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -61,24 +61,54 @@ public class GameFrame extends JFrame {
         // 创建顶部面板
         JPanel topPanel = createTopPanel();
 
-        // 创建中心面板
-        JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.add(createLeftPanel(), BorderLayout.WEST);
-        // 地图区域：放入一个包裹层，居中展示
+        // 创建中心面板，使用GridBagLayout
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+        
+        // 创建并添加左侧面板
+        GridBagConstraints leftGbc = new GridBagConstraints();
+        leftGbc.gridx = 0;
+        leftGbc.gridy = 0;
+        leftGbc.weightx = 0.2;
+        leftGbc.weighty = 1.0;
+        leftGbc.fill = GridBagConstraints.BOTH;
+        centerPanel.add(createLeftPanel(), leftGbc);
+
+        // 创建地图包装面板
         JPanel mapWrapper = new JPanel(new GridBagLayout());
-        mapWrapper.setPreferredSize(new Dimension(600, 600));
         mapWrapper.setBackground(new Color(40, 122, 120));
-        mapWrapper.add(createGamePanel()); // 把地图放入中间
-        centerPanel.add(mapWrapper, BorderLayout.CENTER);
 
+        // 添加地图面板到mapWrapper
+        GridBagConstraints mapGbc = new GridBagConstraints();
+        mapGbc.gridx = 0;
+        mapGbc.gridy = 0;
+        mapGbc.weightx = 1.0;
+        mapGbc.weighty = 1.0;
+        mapGbc.fill = GridBagConstraints.BOTH;
+        mapWrapper.add(createGamePanel(), mapGbc);
 
-        // 创建右侧双列面板
+        // 添加mapWrapper到centerPanel
+        GridBagConstraints centerMapGbc = new GridBagConstraints();
+        centerMapGbc.gridx = 1;
+        centerMapGbc.gridy = 0;
+        centerMapGbc.weightx = 0.6;
+        centerMapGbc.weighty = 1.0;
+        centerMapGbc.fill = GridBagConstraints.BOTH;
+        centerMapGbc.anchor = GridBagConstraints.CENTER;
+        centerPanel.add(mapWrapper, centerMapGbc);
+
+        // 创建右侧面板
         JPanel rightSectionPanel = new JPanel(new BorderLayout());
-        rightSectionPanel.add(createRightColumn1(), BorderLayout.EAST); // 最右侧信息区(右列1)
-        rightSectionPanel.add(createRightColumn2(), BorderLayout.CENTER); // 洪水弃牌区(右列2)
+        rightSectionPanel.add(createRightColumn1(), BorderLayout.EAST);
+        rightSectionPanel.add(createRightColumn2(), BorderLayout.CENTER);
 
-        // 将右侧面板添加到中心面板
-        centerPanel.add(rightSectionPanel, BorderLayout.EAST);
+        // 添加右侧面板到centerPanel
+        GridBagConstraints rightGbc = new GridBagConstraints();
+        rightGbc.gridx = 2;
+        rightGbc.gridy = 0;
+        rightGbc.weightx = 0.2;
+        rightGbc.weighty = 1.0;
+        rightGbc.fill = GridBagConstraints.BOTH;
+        centerPanel.add(rightSectionPanel, rightGbc);
 
         // 创建底部面板
         JPanel bottomPanel = createBottomPanel();
@@ -91,20 +121,15 @@ public class GameFrame extends JFrame {
         // 添加主面板到窗口
         add(mainPanel);
 
-        // 初始化游戏界面
-        updateGameBoard();
-
-        //每次调整窗口大小重载图片
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                updateGameBoard(); // 让 updateCardList 被调用，触发重绘
-            }
+        // Defer initial sizing and board update until after the frame is visible and laid out
+        SwingUtilities.invokeLater(() -> {
+            updateGameBoard(); // This will call updateTileSize at its end
+            // setLocationRelativeTo(null); // Already called if setVisible is true
+            // setVisible(true); // Already called typically before this point by user
         });
-
-        // 居中显示
+        
         setLocationRelativeTo(null);
-        setVisible(true);
+        setVisible(true); // Make frame visible so component hierarchy is realized
     }
 
 
@@ -249,57 +274,50 @@ public class GameFrame extends JFrame {
     }
 
     private JPanel createGamePanel() {
-        JPanel panel = new JPanel() {
+        JPanel panel = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.setColor(new Color(40, 122, 120));
+                g.setColor(new Color(40, 122, 120)); // Background color for the game panel itself
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
         };
 
-        panel.setPreferredSize(new Dimension(1000, 900));
-        panel.setMaximumSize(new Dimension(1000, 900));
-        panel.setMinimumSize(new Dimension(1000, 900));
-        panel.setLayout(new GridLayout(6, 6, 4, 4));
+        tilePanels = new JPanel[6][6]; // Initialize the array
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(2, 2, 2, 2); // Spacing between tiles
 
-        // 初始化格子面板数组
-        tilePanels = new JPanel[6][6];
-
-        // 创建一个辅助方法来判断位置是否应该是海洋
+        // Create and add all 36 panels (ocean or empty land placeholders)
         for (int y = 0; y < 6; y++) {
             for (int x = 0; x < 6; x++) {
-                JPanel tilePanel;
-                
-                // 判断是否是角落区域（应该保持为海洋的位置）
+                gbc.gridx = x;
+                gbc.gridy = y;
+                gbc.weightx = 1.0; // Each cell gets equal weight
+                gbc.weighty = 1.0;
+                gbc.fill = GridBagConstraints.BOTH; // Each cell fills
+
+                JPanel cellPanel;
                 if (isOceanPosition(x, y)) {
-                    // 创建海洋面板
-                    tilePanel = createOceanPanel(x, y);
+                    cellPanel = createOceanPanel(x, y);
                 } else {
-                    // 创建可放置瓦片的面板
-                    tilePanel = createEmptyTilePanel(x, y);
+                    // For land cells that are not ocean corners,
+                    // initially they are placeholders until specific tiles are placed.
+                    // Or, directly create the tile panel if the tile data is available here.
+                    // Let's assume they are placeholders first or handled by updateGameBoard.
+                    // For simplicity, create empty and let updateGameBoard populate.
+                    cellPanel = createEmptyTilePanel(x, y); // This should be a basic panel
                 }
-
-                panel.add(tilePanel);
-                tilePanels[y][x] = tilePanel;
+                panel.add(cellPanel, gbc);
+                tilePanels[y][x] = cellPanel; // Store reference to this cell's panel
             }
         }
 
-        // 放置瓦片（只在非海洋区域）
-        for (Tile tile : gameController.getGameBoard().getTiles()) {
-            Point pos = tile.getPosition();
-            final Tile finalTile = tile;
-
-            int tileX = pos.x;
-            int tileY = pos.y;
-
-            if (!isOceanPosition(tileX, tileY)) {
-                JPanel tilePanel = createTilePanel(tile);
-                panel.remove(tilePanels[tileY][tileX]);
-                panel.add(tilePanel, tileY * 6 + tileX);
-                tilePanels[tileY][tileX] = tilePanel;
-            }
-        }
+        // The actual Tile objects with names and images should be placed
+        // by updateGameBoard by finding the correct tilePanels[y][x]
+        // and then updating its content (e.g., adding/replacing JLayeredPane).
+        // The loop below that was re-adding tiles might be redundant if updateGameBoard
+        // correctly populates the tilePanels created above.
+        // For now, this createGamePanel will return a 6x6 grid of placeholders/ocean.
 
         return panel;
     }
@@ -326,16 +344,16 @@ public class GameFrame extends JFrame {
         JPanel oceanPanel = new JPanel();
         oceanPanel.setLayout(new BorderLayout());
         oceanPanel.setBackground(new Color(40, 122, 120));
-        oceanPanel.setPreferredSize(new Dimension(150, 150));
+        oceanPanel.setPreferredSize(new Dimension(159, 159));
         
         // 创建分层面板
         JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setPreferredSize(new Dimension(150, 150));
+        layeredPane.setPreferredSize(new Dimension(159, 159));
         oceanPanel.add(layeredPane, BorderLayout.CENTER);
 
         // 只添加坐标标签在最上层
         JLabel coordLabel = new JLabel(x + "," + y);
-        coordLabel.setBounds(0, 0, 150, 30);
+        coordLabel.setBounds(0, 0, 159, 30);
         coordLabel.setHorizontalAlignment(JLabel.CENTER);
         coordLabel.setForeground(Color.WHITE);
         coordLabel.setBackground(new Color(40, 122, 120, 200));
@@ -349,7 +367,9 @@ public class GameFrame extends JFrame {
     private JPanel createEmptyTilePanel(int x, int y) {
         JPanel emptyPanel = new JPanel(new BorderLayout());
         emptyPanel.setBackground(new Color(200, 200, 160));
-        emptyPanel.setPreferredSize(new Dimension(150, 150));
+        // 使用相同的宽高值创建正方形
+        int size = 159; // 使用与图片相同的尺寸
+        emptyPanel.setPreferredSize(new Dimension(size, size));
         
         JLabel coordLabel = new JLabel(x + "," + y);
         coordLabel.setHorizontalAlignment(JLabel.CENTER);
@@ -363,70 +383,65 @@ public class GameFrame extends JFrame {
     // 创建瓦片面板
     private JPanel createTilePanel(Tile tile) {
         Point pos = tile.getPosition();
-        JPanel tilePanel = new JPanel();
-        tilePanel.setLayout(new BorderLayout());
-        tilePanel.setBackground(new Color(200, 200, 160));
-        tilePanel.setPreferredSize(new Dimension(150, 150));
-
+                JPanel tilePanel = new JPanel();
+                tilePanel.setLayout(new BorderLayout());
+        
+        // 获取当前面板大小（如果还未设置，使用默认值159）
+        int tileSize = Math.max(tilePanel.getWidth(), 159);
+        
         // 创建分层面板
         JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setPreferredSize(new Dimension(150, 150));
+        layeredPane.setPreferredSize(new Dimension(tileSize, tileSize));
         tilePanel.add(layeredPane, BorderLayout.CENTER);
 
-        // 1. 最底层：瓦片图片（层次0）
-        JLabel tileLabel = new JLabel();
-        tileLabel.setBounds(0, 0, 150, 150);
-        tileLabel.setHorizontalAlignment(JLabel.CENTER);
+        // 1. 瓦片图片（最底层）
+                JLabel tileLabel = new JLabel();
+        tileLabel.setBounds(0, 0, tileSize, tileSize);
+                tileLabel.setHorizontalAlignment(JLabel.CENTER);
         
-        // 根据瓦片状态选择对应的图片路径
+        // 根据瓦片状态选择图片
         String filename = tile.getName().replaceAll("[^a-zA-Z0-9]", "_") + ".png";
-        String path;
-        if (tile.isFlooded() && !tile.isSunk()) {
-            // 如果瓦片被淹没但未沉没，使用SubmersedTiles目录下的图片
-            path = "/SubmersedTiles/" + filename;
-        } else {
-            // 正常状态使用FloodCards目录下的图片
-            path = "/FloodCards/" + filename;
-        }
+        String path = tile.isFlooded() && !tile.isSunk() ? 
+                     "/SubmersedTiles/" + filename : 
+                     "/FloodCards/" + filename;
         
-        ImageIcon icon = ImageUtils.loadCardImage(path, 150, 150);
+        // 使用ImageUtils加载并缩放图片，保持比例
+        ImageIcon icon = ImageUtils.loadAndScaleImage(path, tileSize, tileSize);
         if (icon != null) {
             tileLabel.setIcon(icon);
-        } else {
-            // 如果加载失败，可以添加一些视觉提示
-            System.out.println("无法加载图片: " + path);
-            tileLabel.setText(tile.getName());
         }
-        layeredPane.add(tileLabel, JLayeredPane.DEFAULT_LAYER); // 最底层
+        layeredPane.add(tileLabel, JLayeredPane.DEFAULT_LAYER);
 
-        // 2. 中间层：玩家图标（层次1）
+        // 2. 玩家图标（中间层）
         JLabel playerLabel = new JLabel();
-        playerLabel.setBounds(45, 45, 60, 60); // 居中且稍小一些
+        int iconSize = tileSize / 2;
+        int offset = (tileSize - iconSize) / 2;
+        playerLabel.setBounds(offset, offset, iconSize, iconSize);
         playerLabel.setHorizontalAlignment(JLabel.CENTER);
-        layeredPane.add(playerLabel, JLayeredPane.PALETTE_LAYER); // 中间层
+        layeredPane.add(playerLabel, JLayeredPane.PALETTE_LAYER);
 
-        // 3. 最上层：坐标标签（层次2）
+        // 3. 坐标标签（顶层）
         JLabel coordLabel = new JLabel(pos.x + "," + pos.y + " " + tile.getName());
-        coordLabel.setBounds(0, 0, 150, 30); // 顶部30像素高度
+        coordLabel.setBounds(0, 0, tileSize, tileSize / 5);
         coordLabel.setHorizontalAlignment(JLabel.CENTER);
-        coordLabel.setBackground(new Color(210, 180, 140, 200)); // 添加一点透明度
+        coordLabel.setBackground(new Color(210, 180, 140, 200));
         coordLabel.setOpaque(true);
-        layeredPane.add(coordLabel, JLayeredPane.DRAG_LAYER); // 最上层
+        layeredPane.add(coordLabel, JLayeredPane.DRAG_LAYER);
 
-        // 添加点击事件
+                // 添加点击事件
         layeredPane.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
                 gameController.selectTile(tile);
-                updateGameBoard();
+                            updateGameBoard();
                 logArea.append("选择了瓦片: " + tile.getName() +
                         "，在" + tile.getPosition().x + "," +
                         tile.getPosition().y + "\n");
-            }
-        });
+                    }
+                });
 
         return tilePanel;
-    }
+        }
 
 
     private JPanel createRightColumn1() {
@@ -741,75 +756,86 @@ public class GameFrame extends JFrame {
     private void updateGameBoard() {
         for (int y = 0; y < 6; y++) {
             for (int x = 0; x < 6; x++) {
+                JPanel cellPanel = tilePanels[y][x];
+                if (cellPanel == null) continue;
+
+                cellPanel.removeAll(); // Clear previous content
+                cellPanel.setLayout(new BorderLayout()); // Ensure a layout manager for adding new content
+
                 if (isOceanPosition(x, y)) {
-                    // 海洋格子保持原样
-                    continue;
+                    JPanel oceanContentPanel = createOceanPanel(x, y); // createOceanPanel should return a JPanel containing the JLayeredPane
+                    cellPanel.add(oceanContentPanel, BorderLayout.CENTER);
+                } else {
+                    Tile tile = gameController.findTileAt(x, y);
+                    if (tile != null && !tile.isSunk()) {
+                        JPanel tileSpecificContentPanel = createTilePanel(tile); // createTilePanel returns a JPanel containing the JLayeredPane
+                        cellPanel.add(tileSpecificContentPanel, BorderLayout.CENTER);
+                        // Highlight selected tile
+                        if (gameController.getSelectedTile() == tile) {
+                            // Instead of setting cellPanel background, consider adding a border or overlay in JLayeredPane
+                            cellPanel.setBorder(BorderFactory.createLineBorder(Color.YELLOW, 3));
+                        } else {
+                            cellPanel.setBorder(null); // Or a default border
+                        }
+                    } else { // Sunk or no tile here
+                        // For sunk tiles, we still want a JLayeredPane for consistent structure if updateTileComponents expects it
+                        JLayeredPane sunkLayeredPane = new JLayeredPane();
+                        sunkLayeredPane.setPreferredSize(new Dimension(159, 159)); // Default size, will be resized
+                        
+                        JLabel sunkLabel = new JLabel("SUNK");
+                        sunkLabel.setForeground(Color.RED);
+                        sunkLabel.setHorizontalAlignment(JLabel.CENTER);
+                        sunkLabel.setBounds(0, 0, 159, 159); // Occupy whole area
+                        sunkLayeredPane.add(sunkLabel, JLayeredPane.PALETTE_LAYER); // Add label to layered pane
+                        
+                        JPanel sunkWrapperPanel = new JPanel(new BorderLayout()); // Wrapper to hold the layered pane
+                        sunkWrapperPanel.add(sunkLayeredPane, BorderLayout.CENTER);
+                        sunkWrapperPanel.setBackground(new Color(50,50,50)); // Dark background for sunk
+
+                        cellPanel.add(sunkWrapperPanel, BorderLayout.CENTER);
+                        cellPanel.setBorder(null); // Ensure no selection border for sunk tiles
+                    }
                 }
+                cellPanel.revalidate();
+                // cellPanel.repaint(); // Repaint will be handled by main repaint later
+            }
+        }
 
-                JPanel tilePanel = tilePanels[y][x];
-                JLayeredPane layeredPane = (JLayeredPane) tilePanel.getComponent(0);
-                
-                // 更新瓦片状态
-                Tile tile = gameController.findTileAt(x, y);
-                if (tile != null) {
-                    // 根据瓦片状态选择对应的图片路径
-                    String filename = tile.getName().replaceAll("[^a-zA-Z0-9]", "_") + ".png";
-                    String path;
-                    if (tile.isFlooded() && !tile.isSunk()) {
-                        path = "/SubmersedTiles/" + filename;
-                    } else {
-                        path = "/FloodCards/" + filename;
-                    }
-                    
-                    ImageIcon icon = ImageUtils.loadCardImage(path, 150, 150);
-                    if (icon != null) {
-                        JLabel tileLabel = (JLabel) layeredPane.getComponent(0);
-                        tileLabel.setIcon(icon);
-                    }
-
-                    // 设置背景颜色（可选，因为已经有图片区分了）
-                    if (tile.isFlooded()) {
-                        tilePanel.setBackground(new Color(100, 180, 255, 128)); // 半透明的蓝色
-                    } else {
-                        tilePanel.setBackground(new Color(200, 200, 160));
-                    }
-
-                    // 更新玩家图标
-                    JLabel playerLabel = (JLabel) layeredPane.getComponent(1);
-                    playerLabel.setIcon(null); // 清除原有图标
-                    
-                    // 检查是否有玩家在此位置
+        // Player icon updates, etc., might need to iterate tilePanels again and add to the JLayeredPane
+        // This was simplified earlier, ensure player icons are handled correctly within createTilePanel or here.
+        // For example, after the main loop:
         for (Player player : gameController.getGameBoard().getPlayers()) {
-                        if (player.getCurrentPosition() != null &&
-                            player.getCurrentPosition().getPosition().equals(new Point(x, y))) {
-                        ImageIcon playerIcon = createPlayerIcon(player.getColor());
-                        if (playerIcon != null) {
-                                // 调整图标大小
-                                Image scaledImage = playerIcon.getImage()
-                                    .getScaledInstance(60, 60, Image.SCALE_SMOOTH);
-                                playerLabel.setIcon(new ImageIcon(scaledImage));
-                            }
-                            break;
+            if (player.getCurrentPosition() != null) {
+                Point pos = player.getCurrentPosition().getPosition();
+                if (pos.x >= 0 && pos.x < 6 && pos.y >= 0 && pos.y < 6) {
+                    JPanel targetCell = tilePanels[pos.y][pos.x];
+                    // Assuming the first component of targetCell's content is the JLayeredPane's wrapper
+                    if (targetCell.getComponentCount() > 0 && targetCell.getComponent(0) instanceof JPanel) {
+                        JPanel contentWrapper = (JPanel) targetCell.getComponent(0);
+                        if (contentWrapper.getComponentCount() > 0 && contentWrapper.getComponent(0) instanceof JLayeredPane) {
+                            JLayeredPane layeredPane = (JLayeredPane) contentWrapper.getComponent(0);
+                            
+                            // Remove old player icon for this player if any
+                            // Add new player icon
+                            JLabel playerIconLabel = new JLabel(RoleImageManager.getRoleImage(player.getRoletype())); // Assuming this returns ImageIcon
+                            // Calculate bounds for player icon, e.g., centered
+                            int pSize = layeredPane.getWidth() / 3; // Example size
+                            playerIconLabel.setBounds((layeredPane.getWidth() - pSize)/2, (layeredPane.getHeight() - pSize)/2, pSize, pSize);
+                            playerIconLabel.setHorizontalAlignment(JLabel.CENTER);
+                            layeredPane.add(playerIconLabel, JLayeredPane.MODAL_LAYER); // Higher layer for player
                         }
                     }
                 }
             }
         }
 
-        // 高亮选中的格子
-        Tile selectedTile = gameController.getSelectedTile();
-        if (selectedTile != null) {
-            Point pos = selectedTile.getPosition();
-            if (!isOceanPosition(pos.x, pos.y)) {
-                tilePanels[pos.y][pos.x].setBackground(new Color(255, 255, 0));
-            }
-        }
 
         revalidate();
         repaint();
         updateCardList();
         updateFloodDiscardPile();
         updateWaterLevel();
+        updateTileSize(); // Call this last
     }
 
     private void updateCardList() {
@@ -979,6 +1005,112 @@ public class GameFrame extends JFrame {
             waterLevelPanel.revalidate();
             waterLevelPanel.repaint();
         }
+    }
+
+    // 添加新方法来更新瓦片大小
+    private void updateTileSize() {
+        if (tilePanels == null) return;
+        
+        // 获取游戏面板的容器
+        Container gamePanel = tilePanels[0][0].getParent();
+        
+        // 获取可用空间（考虑内边距）
+        Insets insets = gamePanel.getInsets();
+        int availableWidth = gamePanel.getWidth() - (insets.left + insets.right);
+        int availableHeight = gamePanel.getHeight() - (insets.top + insets.bottom);
+        
+        // 计算单个地砖的大小（确保正方形）
+        int tileSize = Math.min(availableWidth / 6, availableHeight / 6);
+        
+        // 更新所有瓦片的大小
+        for (int y = 0; y < 6; y++) {
+            for (int x = 0; x < 6; x++) {
+                JPanel tilePanel = tilePanels[y][x];
+                if (tilePanel != null) {
+                    tilePanel.setPreferredSize(new Dimension(tileSize, tileSize));
+                    updateTileComponents(tilePanel, tileSize);
+                }
+            }
+        }
+        
+        // 强制重新布局
+        gamePanel.revalidate();
+        gamePanel.repaint();
+    }
+
+    // Modify updateTileComponents to be more robust
+    private void updateTileComponents(JPanel tileCellPanel, int tileSize) { // tileCellPanel is tilePanels[y][x]
+        if (tileCellPanel.getComponentCount() == 0) {
+            // This cell panel is empty, perhaps an error or uninitialized ocean/sunk tile
+            // We can either skip it or log an error.
+            // For now, let's make sure it has a preferred size.
+            tileCellPanel.setPreferredSize(new Dimension(tileSize, tileSize));
+            return;
+        }
+
+        Component content = tileCellPanel.getComponent(0); // This should be the wrapper panel holding the JLayeredPane
+        if (content instanceof JPanel) {
+            JPanel contentWrapper = (JPanel) content;
+            if (contentWrapper.getComponentCount() > 0 && contentWrapper.getComponent(0) instanceof JLayeredPane) {
+                JLayeredPane layeredPane = (JLayeredPane) contentWrapper.getComponent(0);
+                layeredPane.setPreferredSize(new Dimension(tileSize, tileSize));
+                
+                // Iterate through components of JLayeredPane and resize them
+                // This logic needs to be specific to what you add to JLayeredPane
+                for (Component comp : layeredPane.getComponents()) {
+                    if (comp instanceof JLabel) {
+                        JLabel label = (JLabel) comp;
+                        // Example resizing logic, adjust based on your layers
+                        if (JLayeredPane.getLayer(label) == JLayeredPane.DEFAULT_LAYER) { // Tile image
+                            label.setBounds(0, 0, tileSize, tileSize);
+                            // Rescale icon if label has one
+                            if (label.getIcon() instanceof ImageIcon) {
+                                ImageIcon originalIcon = (ImageIcon) label.getIcon();
+                                Image scaledImg = originalIcon.getImage().getScaledInstance(tileSize, tileSize, Image.SCALE_SMOOTH);
+                                label.setIcon(new ImageIcon(scaledImg));
+                            }
+                        } else if (JLayeredPane.getLayer(label) == JLayeredPane.PALETTE_LAYER) { // Player icon or sunk label
+                            // For player icons, you might want a different scaling (e.g., half size, centered)
+                            // For sunk label, full size
+                            if (label.getText() != null && label.getText().equals("SUNK")) {
+                                label.setBounds(0, 0, tileSize, tileSize);
+                            } else { // Assume player icon
+                                int iconSize = tileSize / 2; // Example: player icon is half the tile size
+                                int offset = (tileSize - iconSize) / 2;
+                                label.setBounds(offset, offset, iconSize, iconSize);
+                                if (label.getIcon() instanceof ImageIcon) {
+                                    ImageIcon originalIcon = (ImageIcon) label.getIcon();
+                                    Image scaledImg = originalIcon.getImage().getScaledInstance(iconSize, iconSize, Image.SCALE_SMOOTH);
+                                    label.setIcon(new ImageIcon(scaledImg));
+                                }
+                            }
+                        } else if (JLayeredPane.getLayer(label) == JLayeredPane.DRAG_LAYER) { // Coordinate/Name label
+                            label.setBounds(0, 0, tileSize, tileSize / 5); // Top part for coords
+                        } else if (JLayeredPane.getLayer(label) == JLayeredPane.MODAL_LAYER) { // Player Pawns layer
+                             int pSize = tileSize / 3; 
+                             label.setBounds((tileSize - pSize)/2, (tileSize - pSize)/2, pSize, pSize);
+                             if (label.getIcon() instanceof ImageIcon) {
+                                ImageIcon originalIcon = (ImageIcon) label.getIcon();
+                                Image scaledImg = originalIcon.getImage().getScaledInstance(pSize, pSize, Image.SCALE_SMOOTH);
+                                label.setIcon(new ImageIcon(scaledImg));
+                            }
+                        }
+                    }
+                }
+                layeredPane.revalidate();
+                layeredPane.repaint();
+            } else {
+                 // contentWrapper does not contain a JLayeredPane.
+                 // Set size for the wrapper itself.
+                 contentWrapper.setPreferredSize(new Dimension(tileSize, tileSize));
+            }
+        } else {
+            // The first component of tileCellPanel is not a JPanel.
+            // This is unexpected if you always add a wrapper.
+            // Set size for the component directly if possible.
+            content.setPreferredSize(new Dimension(tileSize, tileSize));
+        }
+         tileCellPanel.setPreferredSize(new Dimension(tileSize, tileSize)); // Also set size for the main cell panel
     }
 
 }

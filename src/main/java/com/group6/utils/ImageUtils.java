@@ -37,5 +37,23 @@ public class ImageUtils {
             return null;
         }
     }
+    public static ImageIcon loadAndScaleImage(String path, int width, int height) {
+        try {
+            URL imageUrl = ImageUtils.class.getResource(path);
+            if (imageUrl == null) {
+                System.err.println("图片资源未找到: " + path);
+                return null;
+            }
 
+            BufferedImage img = ImageIO.read(imageUrl);
+            
+            // 直接缩放到指定尺寸
+            Image scaled = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            return new ImageIcon(scaled);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
