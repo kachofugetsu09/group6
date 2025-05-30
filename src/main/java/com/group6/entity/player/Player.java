@@ -243,33 +243,4 @@ public abstract class Player {
         return false;
     }
 
-    // 在Player类中添加使用直升机卡的方法
-    public boolean useHelicopterCard(Tile destination) {
-        if (hand.stream().anyMatch(card -> card.getType() == CardType.HELICOPTER) && actions > 0) {
-            // 消耗一张直升机卡
-            hand.removeIf(card -> card.getType() == CardType.HELICOPTER);
-            actions--;
-
-            // 移动所有玩家到目标位置
-            gameController.moveAllPlayers(destination);
-            return true;
-        }
-        return false;
-    }
-
-    // 在Player类中添加使用沙袋卡的方法
-    public boolean useSandbagsCard(Tile tileToShoreUp) {
-        if (hand.stream().anyMatch(card -> card.getType() == CardType.SANDBAG) && actions > 0) {
-            // 消耗一张沙袋卡
-            hand.removeIf(card -> card.getType() == CardType.SANDBAG);
-            actions--;
-
-            // 修复指定的瓷砖（无论距离）
-            tileToShoreUp.setFlooded(false);
-            return true;
-        }
-        return false;
-    }
-
-
 }
