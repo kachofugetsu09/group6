@@ -40,10 +40,6 @@ public class GameFrame extends JFrame {
     private JPanel cardButtonPanel;
     private JPanel floodDiscardPanel;
     private JLabel cardCountLabel;
-    //加入暂存列表，方便直升机卡执行效果
-    private List<Player> pendingHelicopterTargets = null;
-    private Card pendingHelicopterCard = null;
-
 
 
 
@@ -442,23 +438,8 @@ public class GameFrame extends JFrame {
                 gameController.selectTile(tile);
                 updateGameBoard();
 
-                if (pendingHelicopterTargets != null && pendingHelicopterCard != null) {
-                    // 使用直升机卡
-                    boolean success = gameController.useCard(pendingHelicopterCard, tile, pendingHelicopterTargets);
-                    if (success) {
-                        logArea.append("Helicopter used to move players to " + tile.getName() + "\n");
-                    } else {
-                        logArea.append("Failed to use Helicopter.\n");
-                    }
-
-                    // 清除状态
-                    pendingHelicopterTargets = null;
-                    pendingHelicopterCard = null;
-                } else {
-                    logArea.append("选择了瓦片: " + tile.getName() +
-                            "，在" + tile.getPosition().x + "," +
-                            tile.getPosition().y + "\n");
-                }
+                // 显示普通瓦片点击日志
+                logArea.append("选择了瓦片: " + tile.getName() + "，在" + tile.getPosition().x + "," + tile.getPosition().y + "\n");
             }
         });
 
@@ -962,16 +943,22 @@ public class GameFrame extends JFrame {
         List<Player> allPlayers = gameController.getGameBoard().getPlayers();
 
         JCheckBox[] playerBoxes = new JCheckBox[allPlayers.size()];
-        JPanel playerPanel = new JPanel();
-        playerPanel.setLayout(new BoxLayout(playerPanel, BoxLayout.Y_AXIS));
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
+        panel.add(new JLabel("Select players to move:"));
         for (int i = 0; i < allPlayers.size(); i++) {
             Player p = allPlayers.get(i);
             playerBoxes[i] = new JCheckBox(p.getRoletype().name() + " (" + p.getColor() + ")");
-            playerPanel.add(playerBoxes[i]);
+            panel.add(playerBoxes[i]);
         }
 
-        int result = JOptionPane.showConfirmDialog(this, playerPanel, "Select Players to Move", JOptionPane.OK_CANCEL_OPTION);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(new JLabel("Enter target tile name:"));
+        JTextField tileField = new JTextField();
+        panel.add(tileField);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Helicopter Move", JOptionPane.OK_CANCEL_OPTION);
         if (result != JOptionPane.OK_OPTION) return;
 
         List<Player> selectedPlayers = new ArrayList<>();
@@ -986,12 +973,34 @@ public class GameFrame extends JFrame {
             return;
         }
 
-        // ✅ 存入临时变量，等待瓦片点击时使用
-        this.pendingHelicopterTargets = selectedPlayers;
-        this.pendingHelicopterCard = gameController.getCurrentPlayer().getSelectedCard();
+        String targetTileName = tileField.getText().trim();
+        if (targetTileName.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter a target tile name.");
+            return;
+        }
 
-        logArea.append("✅ Selected players for helicopter. Now click a tile to move them.\n");
+        Tile targetTile = gameController.findTileByName(targetTileName);
+        if (targetTile == null) {
+            JOptionPane.showMessageDialog(this, "Tile not found: " + targetTileName);
+            return;
+        }
+
+        Card selectedCard = gameController.getCurrentPlayer().getSelectedCard();
+        if (selectedCard == null || selectedCard.getType() != CardType.HELICOPTER) {
+            JOptionPane.showMessageDialog(this, "Selected card is not a Helicopter.");
+            return;
+        }
+
+        // ✅ 立即执行效果
+        boolean success = gameController.useCard(selectedCard, targetTile, selectedPlayers);
+        if (success) {
+            logArea.append("✅ Helicopter used. Players moved to " + targetTile.getName() + "\n");
+            updateGameBoard();
+        } else {
+            logArea.append("❌ Failed to use Helicopter card.\n");
+        }
     }
+
 
 
 

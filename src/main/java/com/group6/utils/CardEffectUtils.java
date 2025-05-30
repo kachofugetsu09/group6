@@ -44,25 +44,4 @@ public class CardEffectUtils {
         }
     }
 
-    // 使用洪水卡：根据卡牌名列表在地图中找到对应瓦片并触发 tileDescend
-    public static void applyFloodByCardNames(List<String> cardNames, GameBoard board, FloodDeck floodDeck) {
-        for (String name : cardNames) {
-            Tile tile = findTileByName(board, name);
-            if (tile != null) {
-                tile.tileDescend();
-            }
-            // 此处假设卡对象不再使用，仅弃名而非对象（因为Card对象只在控制器中）
-            // 若需弃掉实际Card，请由GameController完成
-        }
-    }
-
-    // 工具方法：通过瓦片名查找瓦片对象
-    private static Tile findTileByName(GameBoard board, String name) {
-        for (Tile tile : board.getTiles()) {
-            if (tile.getName().equals(name)) {
-                return tile;
-            }
-        }
-        return null;
-    }
 }

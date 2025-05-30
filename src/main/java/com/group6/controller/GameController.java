@@ -273,7 +273,7 @@ public class GameController {
         return false;
     }
 
-    private Tile findTileByName(String name) {
+    public Tile findTileByName(String name) {
         for (Tile tile : gameBoard.getTiles()) {
             if (tile.getName().equals(name)) {
                 return tile;
