@@ -74,7 +74,9 @@ public class StartMenuFrame extends JFrame {
         startButton.setPreferredSize(new Dimension(200, 60));
         startButton.addActionListener(e -> {
             GameController controller = new GameController(selectedDifficulty);
-            new GameFrame(controller);
+            GameFrame frame = new GameFrame(controller);
+            // 补丁：将 UI 注入 controller
+            controller.setGameFrame(frame);
             dispose();
         });
 

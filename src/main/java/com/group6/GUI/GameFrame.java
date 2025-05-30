@@ -3,6 +3,7 @@ package com.group6.GUI;
 import com.group6.controller.GameController;
 import com.group6.entity.common.Card;
 import com.group6.entity.common.Tile;
+import com.group6.entity.common.CardType;
 import com.group6.entity.player.Player;
 import com.group6.entity.common.GameState;
 import com.group6.utils.ImageUtils;
@@ -24,6 +25,9 @@ import java.net.URL;
 import javax.imageio.ImageIO;
 
 
+
+
+
 public class GameFrame extends JFrame {
     private GameController gameController;
     // 存储每个格子的面板引用
@@ -36,6 +40,9 @@ public class GameFrame extends JFrame {
     private JPanel cardButtonPanel;
     private JPanel floodDiscardPanel;
     private JLabel cardCountLabel;
+    //加入暂存列表，方便直升机卡执行效果
+    private List<Player> pendingHelicopterTargets = null;
+    private Card pendingHelicopterCard = null;
 
 
 
@@ -428,17 +435,33 @@ public class GameFrame extends JFrame {
         coordLabel.setOpaque(true);
         layeredPane.add(coordLabel, JLayeredPane.DRAG_LAYER);
 
-                // 添加点击事件
+           // 添加点击事件
         layeredPane.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 gameController.selectTile(tile);
-                            updateGameBoard();
-                logArea.append("选择了瓦片: " + tile.getName() +
-                        "，在" + tile.getPosition().x + "," +
-                        tile.getPosition().y + "\n");
+                updateGameBoard();
+
+                if (pendingHelicopterTargets != null && pendingHelicopterCard != null) {
+                    // 使用直升机卡
+                    boolean success = gameController.useCard(pendingHelicopterCard, tile, pendingHelicopterTargets);
+                    if (success) {
+                        logArea.append("Helicopter used to move players to " + tile.getName() + "\n");
+                    } else {
+                        logArea.append("Failed to use Helicopter.\n");
                     }
-                });
+
+                    // 清除状态
+                    pendingHelicopterTargets = null;
+                    pendingHelicopterCard = null;
+                } else {
+                    logArea.append("选择了瓦片: " + tile.getName() +
+                            "，在" + tile.getPosition().x + "," +
+                            tile.getPosition().y + "\n");
+                }
+            }
+        });
+
 
         return tilePanel;
         }
@@ -550,20 +573,27 @@ public class GameFrame extends JFrame {
         useCardButton.setPreferredSize(buttonSize);
         useCardButton.addActionListener(e -> {
             Player player = gameController.getCurrentPlayer();
-            Tile tile = gameController.getSelectedTile();
             Card selectedCard = player.getSelectedCard();
             if (selectedCard == null) {
                 logArea.append("No card selected. Cannot use.\n");
                 return;
             }
-            boolean success = gameController.useCard(selectedCard, tile, Arrays.asList(player));
-            if (success) {
-                logArea.append("Card used successfully: " + selectedCard.getName() + "\n");
-                updateGameBoard();
+
+            if (selectedCard.getType() == CardType.HELICOPTER) {
+                // 弹窗选择玩家，等待点击瓦片
+                showHelicopterUseDialog();
             } else {
-                logArea.append("Card use failed.\n");
+                Tile tile = gameController.getSelectedTile();
+                boolean success = gameController.useCard(selectedCard, tile, Arrays.asList(player));
+                if (success) {
+                    logArea.append("Card used successfully: " + selectedCard.getName() + "\n");
+                    updateGameBoard();
+                } else {
+                    logArea.append("Card use failed.\n");
+                }
             }
         });
+
 
         JButton endTurnButton = new JButton("End Turn");
         endTurnButton.setFont(buttonFont);
@@ -875,6 +905,95 @@ public class GameFrame extends JFrame {
         cardButtonPanel.revalidate();
         cardButtonPanel.repaint();
     }
+
+    // 弹出提示让当前玩家选择要弃掉的卡牌
+    public void promptDiscard(Player player) {
+        List<Card> hand = player.getHand();
+        if (hand.isEmpty()) return;
+
+        // 获取所有卡牌名称
+        String[] cardNames = hand.stream().map(Card::getName).toArray(String[]::new);
+
+        // 弹出选择框
+        String selectedCardName = (String) JOptionPane.showInputDialog(
+                this,
+                "You have exceeded your hand limit. Please choose one card to discard:",
+                "Discard Prompt",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                cardNames,
+                cardNames[0]
+        );
+
+        if (selectedCardName == null) {
+            // 禁止取消操作，必须选择一张卡牌
+            JOptionPane.showMessageDialog(
+                    this,
+                    "You must discard one card to continue.",
+                    "Warning",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            promptDiscard(player); // 重新弹出
+            return;
+        }
+
+        // 找到所选卡牌
+        Card toDiscard = null;
+        for (Card card : hand) {
+            if (card.getName().equals(selectedCardName)) {
+                toDiscard = card;
+                break;
+            }
+        }
+
+        if (toDiscard != null) {
+            player.discardCard(toDiscard);
+            updateCardList();
+            logArea.append("You discarded: " + toDiscard.getName() + "\n");
+
+            // 如果仍然超限，继续弃牌
+            if (player.needsToDiscard()) {
+                promptDiscard(player);
+            }
+        }
+    }
+
+    public void showHelicopterUseDialog() {
+        List<Player> allPlayers = gameController.getGameBoard().getPlayers();
+
+        JCheckBox[] playerBoxes = new JCheckBox[allPlayers.size()];
+        JPanel playerPanel = new JPanel();
+        playerPanel.setLayout(new BoxLayout(playerPanel, BoxLayout.Y_AXIS));
+
+        for (int i = 0; i < allPlayers.size(); i++) {
+            Player p = allPlayers.get(i);
+            playerBoxes[i] = new JCheckBox(p.getRoletype().name() + " (" + p.getColor() + ")");
+            playerPanel.add(playerBoxes[i]);
+        }
+
+        int result = JOptionPane.showConfirmDialog(this, playerPanel, "Select Players to Move", JOptionPane.OK_CANCEL_OPTION);
+        if (result != JOptionPane.OK_OPTION) return;
+
+        List<Player> selectedPlayers = new ArrayList<>();
+        for (int i = 0; i < allPlayers.size(); i++) {
+            if (playerBoxes[i].isSelected()) {
+                selectedPlayers.add(allPlayers.get(i));
+            }
+        }
+
+        if (selectedPlayers.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please select at least one player.");
+            return;
+        }
+
+        // ✅ 存入临时变量，等待瓦片点击时使用
+        this.pendingHelicopterTargets = selectedPlayers;
+        this.pendingHelicopterCard = gameController.getCurrentPlayer().getSelectedCard();
+
+        logArea.append("✅ Selected players for helicopter. Now click a tile to move them.\n");
+    }
+
+
 
     // 更新洪水牌弃牌堆面板
     public void updateFloodDiscardPile() {
