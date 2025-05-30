@@ -114,11 +114,12 @@ public class GameController {
         Tile tempTile = new Tile("临时瓦片", 0, 0);
         tempTile.initializeTiles(gameBoard.getTiles());
 
-        HashMap<String,Boolean> capturedTreasures = new HashMap<>();
+        this.capturedTreasures = new HashMap<>();
         capturedTreasures.put("The Earth Stone", false);
         capturedTreasures.put("The Crystal of Fire", false);
         capturedTreasures.put("The Statue of the Wind", false);
         capturedTreasures.put("The Ocean's Chalice", false);
+
 
 
         // 创建四个角色
@@ -243,7 +244,7 @@ public class GameController {
         switchToNextPlayer();
 
         if (checkWin()) {
-            JOptionPane.showMessageDialog(null, "🎉 游戏胜利！你们逃离了禁岛！");
+            JOptionPane.showMessageDialog(null, "🎉 Victory！You guys have escaped！");
         }
     }
 
@@ -416,7 +417,9 @@ public class GameController {
                 break;
 
             case "Helicopter":
-                success = CardEffectUtils.useHelicopter(targets, targetTile);
+                if (targets != null && !targets.isEmpty() && targetTile != null) {
+                    success = CardEffectUtils.useHelicopter(targets, targetTile);
+                }
                 break;
 
             case "Waters Rise":
@@ -488,7 +491,7 @@ public class GameController {
      * @return true 如果所有玩家都在"Fools' Landing"，false 否则
      */
     private boolean areAllPlayersAtFoolsLanding() {
-        final String FOOLS_LANDING = "Fools' Landing";
+        final String FOOLS_LANDING = "Fools_Landing";
         Tile foolsLanding = findTileByName(FOOLS_LANDING);
 
         if (foolsLanding == null) {
