@@ -68,7 +68,7 @@ public class GameFrame extends JFrame {
         GridBagConstraints leftGbc = new GridBagConstraints();
         leftGbc.gridx = 0;
         leftGbc.gridy = 0;
-        leftGbc.weightx = 0.2;
+        leftGbc.weightx = 0.1;
         leftGbc.weighty = 1.0;
         leftGbc.fill = GridBagConstraints.BOTH;
         centerPanel.add(createLeftPanel(), leftGbc);
@@ -81,8 +81,8 @@ public class GameFrame extends JFrame {
         GridBagConstraints mapGbc = new GridBagConstraints();
         mapGbc.gridx = 0;
         mapGbc.gridy = 0;
-        mapGbc.weightx = 1.0;
-        mapGbc.weighty = 1.0;
+        mapGbc.weightx = 1.1;
+        mapGbc.weighty = 1.1;
         mapGbc.fill = GridBagConstraints.BOTH;
         mapWrapper.add(createGamePanel(), mapGbc);
 
@@ -90,7 +90,7 @@ public class GameFrame extends JFrame {
         GridBagConstraints centerMapGbc = new GridBagConstraints();
         centerMapGbc.gridx = 1;
         centerMapGbc.gridy = 0;
-        centerMapGbc.weightx = 0.6;
+        centerMapGbc.weightx = 0.7;
         centerMapGbc.weighty = 1.0;
         centerMapGbc.fill = GridBagConstraints.BOTH;
         centerMapGbc.anchor = GridBagConstraints.CENTER;
@@ -105,7 +105,7 @@ public class GameFrame extends JFrame {
         GridBagConstraints rightGbc = new GridBagConstraints();
         rightGbc.gridx = 2;
         rightGbc.gridy = 0;
-        rightGbc.weightx = 0.2;
+        rightGbc.weightx = 0.1;
         rightGbc.weighty = 1.0;
         rightGbc.fill = GridBagConstraints.BOTH;
         centerPanel.add(rightSectionPanel, rightGbc);
@@ -159,7 +159,7 @@ public class GameFrame extends JFrame {
     // 创建左侧面板
     private JPanel createLeftPanel() {
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(260, 700));
+        panel.setPreferredSize(new Dimension(180, 700));
         panel.setBackground(new Color(222, 184, 135)); // 棕褐色
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -212,7 +212,7 @@ public class GameFrame extends JFrame {
 
         // 滚动面板
         JScrollPane scrollPane = new JScrollPane(cardButtonPanel);
-        scrollPane.setPreferredSize(new Dimension(220, 600));
+        scrollPane.setPreferredSize(new Dimension(180, 600));
         scrollPane.setBorder(null);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -446,21 +446,21 @@ public class GameFrame extends JFrame {
 
     private JPanel createRightColumn1() {
         // ========== 字体与尺寸（大屏适配） ==========
-        Font titleFont = new Font("Arial", Font.BOLD, 32);
-        Font subTitleFont = new Font("Arial", Font.BOLD, 26);
+        Font titleFont = new Font("Arial", Font.BOLD, 24);
+        Font subTitleFont = new Font("Arial", Font.BOLD, 20);
         Font textFont = new Font("Arial", Font.PLAIN, 20);
         Font buttonFont = new Font("Arial", Font.PLAIN, 20);
-        Dimension buttonSize = new Dimension(240, 60);
+        Dimension buttonSize = new Dimension(200, 45);
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setPreferredSize(new Dimension(320, 1000));
+        panel.setPreferredSize(new Dimension(260, 1000));
         panel.setBackground(new Color(240, 240, 240));
 
         // ===== 顶部标题 =====
         JPanel titlePanel = new JPanel();
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
         titlePanel.setBackground(new Color(240, 240, 240));
-        titlePanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 5, 10));
 
         JLabel infoLabel = new JLabel("Game Info", SwingConstants.CENTER);
         infoLabel.setFont(titleFont);
@@ -507,7 +507,7 @@ public class GameFrame extends JFrame {
         logPanel.setBorder(logBorder);
         logPanel.setBackground(new Color(255, 255, 255));
 
-        logArea = new JTextArea(10, 20);
+        logArea = new JTextArea(40, 20);
         logArea.setEditable(false);
         logArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
         JScrollPane logScroll = new JScrollPane(logArea);
@@ -607,10 +607,10 @@ public class GameFrame extends JFrame {
         Font sectionTitleFont = new Font("Arial", Font.BOLD, 24);
         Font labelFont = new Font("Arial", Font.PLAIN, 18);
         Dimension pilePanelSize = new Dimension(180, 120);
-        Dimension floodCardSize = new Dimension(200, 80);
+        Dimension floodCardSize = new Dimension(160, 80);
 
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(260, 800));
+        panel.setPreferredSize(new Dimension(180, 800));
         panel.setBackground(new Color(220, 235, 250));
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -698,7 +698,7 @@ public class GameFrame extends JFrame {
         JPanel panel = new JPanel();
         panel.setPreferredSize(new Dimension(1920, 80));
         panel.setBackground(new Color(70, 130, 180)); // Steel blue
-        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 40, 20));
+        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 40));
 
         JButton saveButton = new JButton("Save Game");
         saveButton.setFont(buttonFont);
@@ -890,8 +890,8 @@ public class GameFrame extends JFrame {
         floodDiscardPanel.removeAll();
 
         List<Card> discardPile = gameController.getFloodDeck().getDiscardPile();
-        int width = 210;
-        int heightPerCard = 210;
+        int width = 160;
+        int heightPerCard = 160;
 
         for (int i = discardPile.size() - 1; i >= 0; i--) {
             Card card = discardPile.get(i);
