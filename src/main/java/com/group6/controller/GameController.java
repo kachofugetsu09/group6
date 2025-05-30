@@ -28,7 +28,7 @@ public class GameController {
     private TreasureDeck treasureDeck;
     private FloodDeck floodDeck;
     private WaterMeter waterMeter;
-    private int turnCounter = 1; // 回合计数器
+    private GameFrame gameFrame;
     private static GameController instance;
     private HashMap<String, Boolean> capturedTreasures = new HashMap<>();
 
@@ -49,6 +49,10 @@ public class GameController {
         }
         return instance;
 
+    }
+
+    public void setGameFrame(GameFrame frame) {
+        this.gameFrame = frame;
     }
 
 
@@ -225,7 +229,7 @@ public class GameController {
 
 
     // 在类的成员变量部分添加UI更新引用
-    private GameFrame gameFrame;
+
 
     // 处理回合结束
     public void endTurn() {
@@ -331,7 +335,13 @@ public class GameController {
                 card.setOwner(currentPlayer);
             }
         }
+
+        // === 添加此处逻辑：如果超出手牌上限，弹窗弃牌 ===
+        if (currentPlayer.needsToDiscard() && gameFrame != null) {
+            gameFrame.promptDiscard(currentPlayer);
+        }
     }
+
 
 
 

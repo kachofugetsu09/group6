@@ -876,6 +876,60 @@ public class GameFrame extends JFrame {
         cardButtonPanel.repaint();
     }
 
+    // 弹出提示让当前玩家选择要弃掉的卡牌
+    public void promptDiscard(Player player) {
+        List<Card> hand = player.getHand();
+        if (hand.isEmpty()) return;
+
+        // 获取所有卡牌名称
+        String[] cardNames = hand.stream().map(Card::getName).toArray(String[]::new);
+
+        // 弹出选择框
+        String selectedCardName = (String) JOptionPane.showInputDialog(
+                this,
+                "You have exceeded your hand limit. Please choose one card to discard:",
+                "Discard Prompt",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                cardNames,
+                cardNames[0]
+        );
+
+        if (selectedCardName == null) {
+            // 禁止取消操作，必须选择一张卡牌
+            JOptionPane.showMessageDialog(
+                    this,
+                    "You must discard one card to continue.",
+                    "Warning",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            promptDiscard(player); // 重新弹出
+            return;
+        }
+
+        // 找到所选卡牌
+        Card toDiscard = null;
+        for (Card card : hand) {
+            if (card.getName().equals(selectedCardName)) {
+                toDiscard = card;
+                break;
+            }
+        }
+
+        if (toDiscard != null) {
+            player.discardCard(toDiscard);
+            updateCardList();
+            logArea.append("You discarded: " + toDiscard.getName() + "\n");
+
+            // 如果仍然超限，继续弃牌
+            if (player.needsToDiscard()) {
+                promptDiscard(player);
+            }
+        }
+    }
+
+
+
     // 更新洪水牌弃牌堆面板
     public void updateFloodDiscardPile() {
         if (floodDiscardPanel == null) return;
