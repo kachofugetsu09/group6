@@ -126,9 +126,7 @@ public class GameFrame extends JFrame {
 
         // Defer initial sizing and board update until after the frame is visible and laid out
         SwingUtilities.invokeLater(() -> {
-            updateGameBoard(); // This will call updateTileSize at its end
-            // setLocationRelativeTo(null); // Already called if setVisible is true
-            // setVisible(true); // Already called typically before this point by user
+            updateGameBoard();
         });
         
         setLocationRelativeTo(null);
@@ -179,25 +177,12 @@ public class GameFrame extends JFrame {
         playersPanel.setMaximumSize(new Dimension(240, 260));
         playersPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // 为每个玩家添加信息面板
         for (Player player : gameController.getGameBoard().getPlayers()) {
-            JPanel playerInfo = new JPanel(new BorderLayout());
-            playerInfo.setMaximumSize(new Dimension(220, 60));
-            playerInfo.setBackground(Color.WHITE);
-            playerInfo.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-
-            JLabel nameLabel = new JLabel(player.getRoletype().name(), JLabel.CENTER);
-            nameLabel.setFont(playerFont);
-
-            JLabel posLabel = new JLabel("(" + player.getCurrentPosition().getPosition().x + "," + player.getCurrentPosition().getPosition().y + ")", JLabel.CENTER);
-            posLabel.setFont(playerFont);
-
-            playerInfo.add(nameLabel, BorderLayout.CENTER);
-            playerInfo.add(posLabel, BorderLayout.SOUTH);
-
+            JPanel playerInfo = createPlayerInfoPanel(player);
             playersPanel.add(playerInfo);
             playersPanel.add(Box.createVerticalStrut(8));
         }
+
 
         JPanel cardsPanel = new JPanel();
         cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
@@ -232,49 +217,44 @@ public class GameFrame extends JFrame {
     }
 
 
-    // 创建玩家信息面板
+    // 创建玩家信息面板（颜色与角色匹配）
     private JPanel createPlayerInfoPanel(Player player) {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
-        panel.setMaximumSize(new Dimension(130, 50));
+        panel.setMaximumSize(new Dimension(220, 60));
 
-        // 根据角色颜色设置背景
+        // 根据 Roletype 设置颜色
         Color bgColor;
-        switch (player.getColor()) {
-            case "RED":
-                bgColor = new Color(255, 200, 200);
-                break;
-            case "BLUE":
-                bgColor = new Color(200, 200, 255);
-                break;
-            case "GREEN":
-                bgColor = new Color(200, 255, 200);
-                break;
-            case "BLACK":
-                bgColor = new Color(220, 220, 220);
-                break;
+        switch (player.getRoletype().name()) {
+            case "ENGINEER":
+                bgColor = new Color(255, 200, 200); break; // Red
+            case "PILOT":
+                bgColor = new Color(200, 255, 200); break; // Green
+            case "NAVIGATOR":
+                bgColor = new Color(200, 200, 255); break; // Blue
+            case "DIVER":
+                bgColor = new Color(220, 220, 220); break; // Gray (Black)
+            case "EXPLORER":
+                bgColor = new Color(255, 255, 180); break; // Yellow
+            case "MESSENGER":
+                bgColor = new Color(245, 245, 245); break; // White
             default:
                 bgColor = Color.WHITE;
-                break;
         }
+
         panel.setBackground(bgColor);
         panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
-        // 添加角色名称
-        JLabel nameLabel = new JLabel(player.getRoletype().name());
-        nameLabel.setHorizontalAlignment(JLabel.CENTER);
+        // 角色名
+        JLabel nameLabel = new JLabel(player.getRoletype().name(), JLabel.CENTER);
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 18));
         panel.add(nameLabel, BorderLayout.CENTER);
 
-        // 添加位置信息
-        if (player.getCurrentPosition() != null) {
-            Point pos = player.getCurrentPosition().getPosition();
-            JLabel posLabel = new JLabel("(" + pos.x + "," + pos.y + ")");
-            posLabel.setHorizontalAlignment(JLabel.CENTER);
-            panel.add(posLabel, BorderLayout.SOUTH);
-        }
+        panel.setName(player.getRoletype().name() + "_panel");
 
         return panel;
     }
+
 
     private JPanel createGamePanel() {
         JPanel panel = new JPanel(new GridBagLayout()) {
